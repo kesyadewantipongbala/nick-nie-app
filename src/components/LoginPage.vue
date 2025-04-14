@@ -22,7 +22,6 @@ const login = () => {
           <div class="input-group">
             <input type="password" v-model="password" placeholder="Kata Sandi" />
           </div>
-          <p class="forgot-password">Lupa kata sandi?</p>
           <button type="submit">Masuk</button>
         </form>
         <p class="register-link">
