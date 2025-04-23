@@ -6,5 +6,6 @@ import Sidebar from './components/Sidebar.vue'
   <RouterView/>
 </template>
 
-<style scoped>
+<style>
+@import "tailwindcss";
 </style>

@@ -1,9 +1,9 @@
 import { createApp } from 'vue'
-import './style.css'
+// import './style.css'
 import App from './App.vue'
 import { createPinia } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router';
-import LoginPage from './components/LoginPage.vue';
+import LoginPage from './pages/LoginPage.vue';
 import DataBarang from './components/DataBarang.vue';
 import RegisterPage from './components/RegisterPage.vue';
 import Dashoard from './components/Dashoard.vue';
