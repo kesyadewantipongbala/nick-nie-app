@@ -6,7 +6,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import LoginPage from './pages/LoginPage.vue';
 import DataBarang from './components/DataBarang.vue';
 import RegisterPage from './components/RegisterPage.vue';
-import Dashoard from './components/Dashoard.vue';
+import DashboardPage from './pages/DashboardPage.vue';
 
 const pinia = createPinia();
 const router = createRouter({
@@ -29,7 +29,7 @@ const router = createRouter({
         },
         {
             path: "/dashboard",
-            component: Dashoard
+            component: DashboardPage
         },
     ],
     history: createWebHistory()
