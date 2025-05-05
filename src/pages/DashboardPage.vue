@@ -30,6 +30,15 @@ const logout = () => {
           Data Produk
         </a>
         <a href="#" class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition">
+          Data Pelanggan
+        </a>
+        <a href="#" class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition">
+          Pembelian
+        </a>
+        <a href="#" class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition">
+          Penjualan
+        </a>
+        <a href="#" class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition">
           Pengaturan
         </a>
       </nav>
