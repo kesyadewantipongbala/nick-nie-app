@@ -4,24 +4,49 @@
       <h1 class="text-2xl font-bold text-lime-600">Nick Nie Apps</h1>
     </div>
     <nav class="flex-1 p-4 space-y-2">
-      <a href="#" class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition">
+      <router-link
+        to="/dashboard"
+        class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition"
+        active-class="bg-lime-100 font-semibold text-lime-600"
+      >
         Dashboard
-      </a>
-      <a href="#" class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition">
+      </router-link>
+
+      <router-link
+        to="/data_barang"
+        class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition"
+        active-class="bg-lime-100 font-semibold text-lime-600"
+      >
         Data Produk
-      </a>
-      <a href="#" class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition">
+      </router-link>
+
+      <router-link
+        to="#"
+        class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition"
+      >
         Data Pelanggan
-      </a>
-      <a href="#" class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition">
+      </router-link>
+
+      <router-link
+        to="#"
+        class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition"
+      >
         Pembelian
-      </a>
-      <a href="#" class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition">
+      </router-link>
+
+      <router-link
+        to="#"
+        class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition"
+      >
         Penjualan
-      </a>
-      <a href="#" class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition">
+      </router-link>
+
+      <router-link
+        to="#"
+        class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition"
+      >
         Pengaturan
-      </a>
+      </router-link>
     </nav>
   </aside>
 </template>
