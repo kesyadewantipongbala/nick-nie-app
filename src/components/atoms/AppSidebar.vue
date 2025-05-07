@@ -21,28 +21,35 @@
       </router-link>
 
       <router-link
-        to="#"
+        to="data_pelanggan"
         class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition"
       >
         Data Pelanggan
       </router-link>
 
       <router-link
-        to="#"
+        to="data_pemasok"
+        class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition"
+      >
+        Data Pemasok
+      </router-link>
+
+      <router-link
+        to="pembelian"
         class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition"
       >
         Pembelian
       </router-link>
 
       <router-link
-        to="#"
+        to="penjualan"
         class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition"
       >
         Penjualan
       </router-link>
 
       <router-link
-        to="#"
+        to="pengaturan"
         class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition"
       >
         Pengaturan

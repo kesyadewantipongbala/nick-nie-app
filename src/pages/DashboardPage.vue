@@ -1,15 +1,18 @@
 <script setup>
-  import { useRouter } from 'vue-router';
   import { ref } from 'vue';
+  import SummaryBox from '../components/atoms/SummaryBox.vue';
 
-  const router = useRouter();
+  const todaySummary = [
+    { label: 'Penjualan (IDR)', value: '700,000' },
+    { label: 'Pesanan', value: '150' },
+  ];
+
+  const totalSummary = [
+    { label: 'Penjualan (IDR)', value: '1,700,000' },
+    { label: 'Pesanan', value: '1,150' },
+  ];
+
   const pageTitle = ref('Dashboard');
-  const username = ref('John Doe');
-
-  const logout = () => {
-    console.log('Logging out...');
-    router.push('/login');
-  };
 </script>
 
 <template>
@@ -18,19 +21,10 @@
       <main class="flex-1 overflow-y-auto p-6">
         <div class="text-2xl font-bold text-gray-800 mb-6">{{ pageTitle }}</div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="p-6 rounded-2xl bg-white shadow-md">
-            <div class="text-gray-600">Total Users</div>
-            <div class="text-3xl font-bold text-lime-600">1,234</div>
-          </div>
-          <div class="p-6 rounded-2xl bg-white shadow-md">
-            <div class="text-gray-600">Total Orders</div>
-            <div class="text-3xl font-bold text-lime-600">567</div>
-          </div>
-          <div class="p-6 rounded-2xl bg-white shadow-md">
-            <div class="text-gray-600">Revenue</div>
-            <div class="text-3xl font-bold text-lime-600">$8,900</div>
-          </div>
+        <!-- Flex container horizontal -->
+        <div class="flex flex-row gap-6">
+          <SummaryBox title="Ringkasan Hari Ini" :items="todaySummary" />
+          <SummaryBox title="Total Ringkasan" :items="totalSummary" />
         </div>
       </main>
     </div>

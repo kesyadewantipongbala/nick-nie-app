@@ -182,14 +182,6 @@
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
       <h2 class="text-2xl font-semibold text-gray-800">Data Barang</h2>
-      <div class="flex items-center space-x-2">
-        <div class="w-10 h-10 rounded-full bg-gray-300"></div>
-        <div class="text-right">
-          <div class="font-medium">Amanda</div>
-          <div class="text-sm text-gray-500">Admin</div>
-        </div>
-        <span class="text-green-600 text-xl">⚙️</span>
-      </div>
     </div>
 
     <!-- Tombol Tambah -->

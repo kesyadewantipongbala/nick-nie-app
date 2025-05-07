@@ -44,7 +44,7 @@
       <template #actions="{ row }">
         <div class="flex gap-2">
           <button
-            class="bg-lime-500 hover:bg-lime-600 text-white px-3 py-1 rounded-md text-sm"
+            class="bg-[#007bff] hover:bg-lime-600 text-white px-3 py-1 rounded-md text-sm"
             @click="openEditModal(row)"
           >
             Edit

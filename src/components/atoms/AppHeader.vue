@@ -1,16 +1,23 @@
 <script setup>
-  import { ref } from 'vue';
-  import { useRouter } from 'vue-router';
+  import { ref, computed } from 'vue';
+  import { useRoute } from 'vue-router';
 
   const props = defineProps({
     pageTitle: String,
     username: String,
   });
-
   const emit = defineEmits(['logout']);
 
   const showDropdown = ref(false);
   const toggleDropdown = () => (showDropdown.value = !showDropdown.value);
+
+  // Akses route
+  const route = useRoute();
+
+  // Ambil judul breadcrumb dari meta.title
+  const breadcrumb = computed(() => {
+    return route.meta.title || 'Tidak Diketahui';
+  });
 </script>
 
 <template>
@@ -20,7 +27,7 @@
     <div class="flex items-center space-x-2 text-gray-600">
       <span>Home</span>
       <span>/</span>
-      <span class="font-semibold text-gray-900">{{ pageTitle }}</span>
+      <span class="font-semibold text-gray-900">{{ breadcrumb }}</span>
     </div>
 
     <div class="relative">

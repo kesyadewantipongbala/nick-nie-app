@@ -14,30 +14,20 @@ const pinia = createPinia();
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    {
-      path: '/',
-      name: 'Login',
-      component: LoginPage,
-    },
-    {
-      path: '/login',
-      name: 'LoginPage',
-      component: LoginPage,
-    },
-    {
-      path: '/register',
-      name: 'Register',
-      component: RegisterPage,
-    },
+    { path: '/', name: 'Login', component: LoginPage, meta: { title: 'Login' } },
+    { path: '/login', name: 'LoginPage', component: LoginPage, meta: { title: 'Login' } },
+    { path: '/register', name: 'Register', component: RegisterPage, meta: { title: 'Register' } },
     {
       path: '/dashboard',
       name: 'Dashboard',
       component: DashboardPage,
+      meta: { title: 'Dashboard' },
     },
     {
       path: '/data_barang',
       name: 'DataBarang',
       component: DataBarang,
+      meta: { title: 'Data Barang' },
     },
     {
       path: '/:pathMatch(.*)*',
@@ -45,6 +35,7 @@ const router = createRouter({
       component: {
         template: '<div class="p-8 text-red-600">404 - Halaman Tidak Ditemukan</div>',
       },
+      meta: { title: 'Not Found' },
     },
   ],
 });
