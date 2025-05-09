@@ -2,6 +2,8 @@
   import { ref } from 'vue';
   import { useRouter } from 'vue-router';
   import Cookies from 'js-cookie'; // ← tambahkan ini
+  // import { useConfigStore } from '../store';
+  // import { useStore } from 'vuex';
 
   const username = ref('');
   const password = ref('');
@@ -10,12 +12,20 @@
 
   const router = useRouter();
 
+  // const store = useStore();
+  // const baseURL = store.getters.getBaseURL;
+
+  // const configStore = useConfigStore();
+  // console.log(configStore.baseURL);
+
+  // console.log(baseURL); // Akses variabel global baseURL
+
   const login = async () => {
     loading.value = true;
     errorMsg.value = '';
 
     try {
-      const response = await fetch('http://localhost:3000/api/user/login', {
+      const response = await fetch('http://13.239.133.55:5000/api/user/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -30,8 +40,9 @@
 
       if (response.ok && data.success === true) {
         // ✅ Simpan token ke cookies (berlaku 1 hari)
-        console.log(data.data); // Log token untuk debugging
-        localStorage.setItem('DATA_USER', data.data.user); // Simpan data user ke localStorage
+        console.log(data.data.data); // Log token untuk debugging
+        localStorage.setItem('DATA_ROLE', data.data.user.role); // Simpan data user ke localStorage
+        localStorage.setItem('DATA_USERNAME', data.data.user.username); // Simpan data user ke localStorage
         Cookies.set('token', data.data.token, { expires: 1 });
 
         // Redirect ke dashboard

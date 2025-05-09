@@ -14,6 +14,8 @@
   const route = useRoute();
   const router = useRouter();
 
+  const username = ref(localStorage.getItem('DATA_USERNAME') || ''); // Ambil username dari localStorage
+
   const breadcrumb = computed(() => {
     return route.meta.title || 'Tidak Diketahui';
   });

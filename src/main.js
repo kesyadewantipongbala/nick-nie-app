@@ -9,7 +9,11 @@ import RegisterPage from './pages/RegisterPage.vue';
 import DashboardPage from './pages/DashboardPage.vue';
 import DataBarang from './pages/DasboardBarang.vue';
 
+// import store from './store';
+
 const pinia = createPinia();
+
+const app = createApp(App);
 
 const router = createRouter({
   history: createWebHistory(),
@@ -40,4 +44,5 @@ const router = createRouter({
   ],
 });
 
-createApp(App).use(pinia).use(router).mount('#app');
+// app.use(store);
+app.use(pinia).use(router).mount('#app');
