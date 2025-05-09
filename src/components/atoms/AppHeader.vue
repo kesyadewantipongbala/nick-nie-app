@@ -1,28 +1,35 @@
 <script setup>
   import { ref, computed } from 'vue';
-  import { useRoute } from 'vue-router';
+  import { useRoute, useRouter } from 'vue-router';
+  import Cookies from 'js-cookie';
 
   const props = defineProps({
     pageTitle: String,
     username: String,
   });
-  const emit = defineEmits(['logout']);
 
   const showDropdown = ref(false);
   const toggleDropdown = () => (showDropdown.value = !showDropdown.value);
 
-  // Akses route
   const route = useRoute();
+  const router = useRouter();
 
-  // Ambil judul breadcrumb dari meta.title
   const breadcrumb = computed(() => {
     return route.meta.title || 'Tidak Diketahui';
   });
+
+  // ✅ Fungsi Logout: hapus token dan redirect
+  const logout = () => {
+    Cookies.remove('token'); // Hapus token dari cookies
+    router.push('/login'); // Redirect ke login
+  };
+
+  console.log(localStorage.getItem('DATA_USER'));
 </script>
 
 <template>
   <header
-    class="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200 relative"
+    class="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200 relative min-h-[80px]"
   >
     <div class="flex items-center space-x-2 text-gray-600">
       <span>Home</span>
@@ -45,7 +52,7 @@
         class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg overflow-hidden z-50"
       >
         <button
-          @click="$emit('logout')"
+          @click="logout"
           class="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-lime-100 transition"
         >
           Logout

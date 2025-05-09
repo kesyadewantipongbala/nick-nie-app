@@ -1,6 +1,6 @@
 <template>
-  <aside class="hidden md:flex flex-col w-64 bg-white border-r border-gray-200">
-    <div class="h-20 flex items-center justify-center border-b border-gray-200">
+  <aside class="hidden md:flex flex-col w-64 bg-[#f9ffee] border-r border-gray-200">
+    <div class="h-20 flex items-center justify-center border-b border-gray-200 bg-[#e9f7d3]">
       <h1 class="text-2xl font-bold text-lime-600">Nick Nie Apps</h1>
     </div>
     <nav class="flex-1 p-4 space-y-2">

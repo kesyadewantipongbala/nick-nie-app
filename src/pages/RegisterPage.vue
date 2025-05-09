@@ -6,71 +6,106 @@
   const username = ref('');
   const password = ref('');
   const confirmPassword = ref('');
+  const error = ref('');
+  const loading = ref(false);
 
-  const register = () => {
-    if (password.value !== confirmPassword.value) {
-      alert('Kata sandi tidak cocok!');
+  const register = async () => {
+    error.value = '';
+
+    if (!username.value || !password.value || !confirmPassword.value) {
+      error.value = 'Semua kolom harus diisi.';
       return;
     }
 
-    console.log('Registrasi dengan:', username.value, password.value);
-    // Tambahkan logika registrasi ke backend di sini
+    if (password.value !== confirmPassword.value) {
+      error.value = 'Kata sandi tidak cocok!';
+      return;
+    }
+
+    try {
+      loading.value = true;
+
+      const response = await fetch('http://localhost:3000/api/user/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: username.value,
+          password: password.value,
+          role: 'Owner',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Registrasi gagal.');
+      }
+
+      // Jika berhasil, redirect ke login
+      router.push('/login');
+    } catch (err) {
+      error.value = err.message;
+    } finally {
+      loading.value = false;
+    }
   };
 </script>
 
 <template>
-  <div class="flex h-screen w-screen font-sans">
-    <!-- Kiri: Background Image -->
-    <div
-      class="w-1/2 hidden md:flex flex-col items-center justify-center bg-cover bg-center"
-      style="background-image: url('/assets/BG.png')"
-    >
-      <div class="bg-white/80 p-6 rounded-xl text-center">
-        <h1 class="text-3xl font-bold text-lime-600 mb-2">Nick Nie</h1>
-        <h2 class="text-xl text-gray-700">Hidroponik</h2>
-      </div>
+  <div class="flex h-screen w-screen font-poppins">
+    <!-- Kiri: Gambar & Branding -->
+    <div class="flex-1 hidden md:flex flex-col items-center justify-center bg-lime-50 p-8">
+      <h1 class="text-3xl text-lime-600 font-bold text-center mb-6 leading-tight">
+        Nick Nie<br />Hidroponik
+      </h1>
+      <!-- <img src="/assets/BG.png" alt="Hidroponik" class="w-full max-w-sm" /> -->
     </div>
 
-    <!-- Kanan: Form Registrasi -->
-    <div class="w-full md:w-1/2 flex items-center justify-center px-6">
-      <div class="w-full max-w-sm bg-white p-8 rounded-3xl shadow-lg space-y-6">
-        <h2 class="text-2xl font-bold text-lime-700 text-center">Buat Akun Baru</h2>
+    <!-- Kanan: Form -->
+    <div class="flex flex-1 items-center justify-center bg-white p-8">
+      <div class="w-full max-w-md">
+        <h2 class="text-2xl font-bold text-lime-800 mb-6 text-center">Buat Akun Baru</h2>
 
         <form @submit.prevent="register" class="space-y-4">
+          <div v-if="error" class="text-sm text-red-600 text-center">{{ error }}</div>
+
           <input
             v-model="username"
             type="text"
             placeholder="Nama Pengguna"
-            class="w-full px-5 py-3 border border-lime-400 rounded-full text-lime-700 placeholder-lime-400 focus:outline-none focus:ring-2 focus:ring-lime-400/50"
+            class="w-full px-5 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-lime-400 text-gray-700"
           />
 
           <input
             v-model="password"
             type="password"
             placeholder="Kata Sandi"
-            class="w-full px-5 py-3 border border-lime-400 rounded-full text-lime-700 placeholder-lime-400 focus:outline-none focus:ring-2 focus:ring-lime-400/50"
+            class="w-full px-5 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-lime-400 text-gray-700"
           />
 
           <input
             v-model="confirmPassword"
             type="password"
             placeholder="Konfirmasi Kata Sandi"
-            class="w-full px-5 py-3 border border-lime-400 rounded-full text-lime-700 placeholder-lime-400 focus:outline-none focus:ring-2 focus:ring-lime-400/50"
+            class="w-full px-5 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-lime-400 text-gray-700"
           />
 
           <button
             type="submit"
-            class="w-full py-3 font-semibold rounded-full bg-lime-500 text-white hover:bg-lime-600 active:bg-lime-700 transition-colors"
+            :disabled="loading"
+            class="w-full py-3 bg-lime-500 hover:bg-lime-600 text-white font-semibold rounded-full transition disabled:opacity-50"
           >
-            Daftar
+            {{ loading ? 'Mendaftarkan...' : 'Daftar' }}
           </button>
         </form>
 
-        <p class="text-center text-sm text-gray-500">
+        <p class="text-sm text-center mt-4 text-gray-700">
           Sudah punya akun?
           <span
             @click="router.push('/login')"
-            class="text-lime-700 font-bold cursor-pointer hover:underline"
+            class="font-semibold text-lime-600 cursor-pointer hover:underline"
           >
             Masuk di sini
           </span>

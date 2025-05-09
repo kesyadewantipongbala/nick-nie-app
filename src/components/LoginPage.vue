@@ -1,147 +1,104 @@
 <script setup>
-import { ref } from "vue";
+  import { ref } from 'vue';
+  import { useRouter } from 'vue-router';
 
-const username = ref("");
-const password = ref("");
+  const username = ref('');
+  const password = ref('');
+  const errorMsg = ref('');
+  const loading = ref(false);
 
-const login = () => {
-  console.log("Login dengan:", username.value, password.value);
-  // Tambahkan logika autentikasi ke backend di sini
-};
+  const router = useRouter();
+
+  const login = async () => {
+    loading.value = true;
+    errorMsg.value = '';
+
+    try {
+      const response = await fetch('http://localhost:3000/api/user/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: username.value,
+          password: password.value,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.status === 'success') {
+        // Simpan token atau user info ke localStorage atau Pinia
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('username', data.user.username);
+
+        // Redirect ke dashboard
+        router.push('/dashboard');
+      } else {
+        errorMsg.value = data.message || 'Login gagal. Cek kembali username dan password.';
+      }
+    } catch (error) {
+      errorMsg.value = 'Terjadi kesalahan saat menghubungi server.';
+    } finally {
+      loading.value = false;
+    }
+  };
 </script>
 
 <template>
-  <div class="container">
-    <!-- Kiri: Gambar & Branding -->
-    <div class="left-panel">
-      <div class="branding">
-        <h1>Nick Nie<br />Hidroponik</h1>
-        <img src="/assets/illustration.png" alt="Hidroponik" />
-      </div>
+  <div class="flex h-screen w-screen font-poppins">
+    <!-- Kiri: Branding -->
+    <div class="flex flex-1 flex-col items-center justify-center bg-lime-50 p-8">
+      <h1 class="text-3xl text-lime-600 font-bold text-center mb-6 leading-tight">
+        Nick Nie<br />Hidroponik
+      </h1>
+      <img src="/assets/illustration.png" alt="Hidroponik" class="w-full max-w-sm" />
     </div>
 
     <!-- Kanan: Form -->
-    <div class="right-panel">
-      <div class="login-box">
-        <h2>Masuk ke akun Anda</h2>
-        <form @submit.prevent="login">
-          <div class="input-group">
-            <input type="text" v-model="username" placeholder="Nama Pengguna" />
-          </div>
-          <div class="input-group">
+    <div class="flex flex-1 items-center justify-center bg-white p-8">
+      <div class="w-full max-w-md">
+        <h2 class="text-2xl font-bold text-lime-800 mb-6 text-center">Masuk ke akun Anda</h2>
+
+        <form @submit.prevent="login" class="space-y-4">
+          <div v-if="errorMsg" class="text-red-600 text-sm text-center">{{ errorMsg }}</div>
+
+          <div>
             <input
-              type="password"
-              v-model="password"
-              placeholder="Kata Sandi"
+              v-model="username"
+              type="text"
+              placeholder="Nama Pengguna"
+              class="w-full px-5 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-lime-400"
             />
-            <div class="forgot">Lupa kata sandi?</div>
           </div>
-          <button type="submit">Masuk</button>
+          <div>
+            <input
+              v-model="password"
+              type="password"
+              placeholder="Kata Sandi"
+              class="w-full px-5 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-lime-400"
+            />
+            <div class="text-sm text-lime-600 text-right mt-1 cursor-pointer hover:underline">
+              Lupa kata sandi?
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            :disabled="loading"
+            class="w-full py-3 bg-lime-500 hover:bg-lime-600 text-white font-semibold rounded-full transition disabled:opacity-50"
+          >
+            {{ loading ? 'Memproses...' : 'Masuk' }}
+          </button>
         </form>
-        <p class="register-link">Belum punya akun? <span>Daftar akun</span></p>
+
+        <p class="text-sm text-center mt-4 text-gray-700">
+          Belum punya akun?
+          <span class="font-semibold text-lime-600 cursor-pointer hover:underline">
+            Daftar akun
+          </span>
+        </p>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.container {
-  display: flex;
-  height: 100vh;
-  width: 100vw;
-  font-family: "Poppins", sans-serif;
-}
-
-.left-panel {
-  flex: 1;
-  background-color: #f0f9e8;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.left-panel .branding h1 {
-  font-size: 2rem;
-  color: #a4d04c;
-  text-align: center;
-  margin-bottom: 1.5rem;
-}
-
-.left-panel img {
-  max-width: 100%;
-  height: auto;
-}
-
-.right-panel {
-  flex: 1;
-  background-color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.login-box {
-  width: 100%;
-  max-width: 360px;
-  text-align: center;
-}
-
-.login-box h2 {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #3b5f3b;
-  margin-bottom: 2rem;
-}
-
-.input-group {
-  margin-bottom: 1.25rem;
-  position: relative;
-}
-
-.input-group input {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 2px solid #c8c8c8;
-  border-radius: 9999px;
-  font-size: 1rem;
-  outline: none;
-}
-
-.input-group .forgot {
-  font-size: 0.8rem;
-  color: #9cc317;
-  text-align: right;
-  margin-top: 0.25rem;
-  cursor: pointer;
-}
-
-button[type="submit"] {
-  width: 100%;
-  padding: 0.75rem;
-  background-color: #9cc317;
-  color: white;
-  font-weight: bold;
-  border: none;
-  border-radius: 9999px;
-  font-size: 1rem;
-  margin-top: 1rem;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-button[type="submit"]:hover {
-  background-color: #7ca711;
-}
-
-.register-link {
-  margin-top: 1rem;
-  font-size: 0.85rem;
-  color: #333;
-}
-
-.register-link span {
-  font-weight: bold;
-  color: #9cc317;
-  cursor: pointer;
-}
-</style>
