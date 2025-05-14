@@ -1,3 +1,4 @@
+<!-- src/components/molecules/ProdukTable.vue -->
 <script setup>
   import { ref } from 'vue';
   import ReusableTable from '../atoms/ReusableTable.vue';
@@ -65,18 +66,17 @@
         <div
           v-for="(label, key) in {
             nama: 'Nama Barang',
-            kode: 'Kode Barang',
+            kode_barang: 'Kode Barang',
             kategori: 'Kategori',
-            beli: 'Harga Beli',
-            jual: 'Harga Jual',
-            stok: 'Stok',
+            jumlah: 'Jumlah',
+            harga: 'Harga',
           }"
           :key="key"
         >
           <label class="block mb-1 text-gray-600">{{ label }}</label>
           <input
             v-model="editingItem[key]"
-            :type="key === 'stok' ? 'number' : 'text'"
+            :type="key === 'jumlah' ? 'number' : 'text'"
             class="w-full border px-3 py-2 rounded"
           />
         </div>

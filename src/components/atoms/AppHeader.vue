@@ -25,8 +25,6 @@
     Cookies.remove('token'); // Hapus token dari cookies
     router.push('/login'); // Redirect ke login
   };
-
-  console.log(localStorage.getItem('DATA_USER'));
 </script>
 
 <template>

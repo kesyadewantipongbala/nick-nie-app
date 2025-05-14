@@ -2,12 +2,20 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import { createPinia } from 'pinia';
 import { createRouter, createWebHistory } from 'vue-router';
+import axios from 'axios';
+import Cookies from 'js-cookie';
+
+axios.defaults.baseURL = 'http://13.239.133.55:5000';
+const token = Cookies.get('token');
+if (token) {
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
 
 // Import Pages
 import LoginPage from './pages/LoginPage.vue';
 import RegisterPage from './pages/RegisterPage.vue';
 import DashboardPage from './pages/DashboardPage.vue';
-import DataBarang from './pages/DasboardBarang.vue';
+import ProdukPage from './pages/produk/ProdukPage.vue';
 
 // import store from './store';
 
@@ -28,9 +36,9 @@ const router = createRouter({
       meta: { title: 'Dashboard' },
     },
     {
-      path: '/data_barang',
-      name: 'DataBarang',
-      component: DataBarang,
+      path: '/produk',
+      name: 'ProdukPage',
+      component: ProdukPage,
       meta: { title: 'Data Barang' },
     },
     {

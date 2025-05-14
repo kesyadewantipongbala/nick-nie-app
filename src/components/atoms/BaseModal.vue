@@ -1,3 +1,4 @@
+<!-- src/components/atoms/BaseModal.vue -->
 <script setup>
   defineProps({
     show: Boolean,

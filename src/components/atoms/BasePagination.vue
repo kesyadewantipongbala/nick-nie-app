@@ -1,3 +1,4 @@
+<!-- src/components/atoms/BasePagination.vue -->
 <script setup>
   import { computed } from 'vue';
 

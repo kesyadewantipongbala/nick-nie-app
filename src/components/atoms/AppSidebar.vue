@@ -13,7 +13,7 @@
       </router-link>
 
       <router-link
-        to="/data_barang"
+        to="/produk"
         class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition"
         active-class="bg-lime-100 font-semibold text-lime-600"
       >
