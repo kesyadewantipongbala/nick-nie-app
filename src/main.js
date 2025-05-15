@@ -16,6 +16,8 @@ import LoginPage from './pages/LoginPage.vue';
 import RegisterPage from './pages/RegisterPage.vue';
 import DashboardPage from './pages/DashboardPage.vue';
 import ProdukPage from './pages/produk/ProdukPage.vue';
+import PelangganPage from './pages/pelanggan/PelangganPage.vue';
+import SupplierPage from './pages/supplier/SupplierPage.vue';
 
 // import store from './store';
 
@@ -40,6 +42,18 @@ const router = createRouter({
       name: 'ProdukPage',
       component: ProdukPage,
       meta: { title: 'Data Barang' },
+    },
+    {
+      path: '/data_pelanggan',
+      name: 'PelangganPage',
+      component: PelangganPage,
+      meta: { title: 'Data Pelanggan' },
+    },
+    {
+      path: '/data_supplier',
+      name: 'SupplierPage',
+      component: SupplierPage,
+      meta: { title: 'Data Supplier' },
     },
     {
       path: '/:pathMatch(.*)*',

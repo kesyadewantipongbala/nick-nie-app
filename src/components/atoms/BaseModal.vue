@@ -17,7 +17,11 @@
 
 <template>
   <transition name="fade">
-    <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div
+      v-if="show"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      @click="$emit('close')"
+    >
       <div :class="`bg-white rounded-xl shadow-lg p-6 w-full ${width}`" @click.stop>
         <!-- Header -->
         <div class="flex justify-between items-center mb-4">
