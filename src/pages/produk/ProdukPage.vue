@@ -1,246 +1,148 @@
-<!-- src/pages/produk/ProdukPage.vue -->
 <template>
-  <div class="produk-list p-4 space-y-6">
-    <!-- Header -->
-    <div class="flex justify-between items-center">
-      <h1 class="text-xl font-semibold">Data Produk</h1>
-      <button
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        @click="showAddModal = true"
-      >
-        + Add Produk
+  <div class="px-4 py-6 w-full mx-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-semibold">Data Produk</h1>
+      <button @click="openModal()"
+        class="bg-[#007bff] hover:bg-lime-600 text-white px-4 py-2 rounded-md text-sm transition">
+        + Tambah Produk
       </button>
     </div>
 
-    <!-- Tabel Produk -->
-    <ProdukTable :rows="rows" :headers="headers" @edit="handleEdit" @delete="handleDelete" />
+    <div class="flex flex-wrap items-center gap-4 mb-6">
+      <input v-model="search" @input="onSearchInput" type="text" placeholder="Cari produk..."
+        class="flex-grow px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+        style="height: 38px;" />
 
-    <!-- Pagination -->
-    <BasePagination
-      :currentPage="currentPage"
-      :totalItems="totalItems"
-      :itemsPerPage="itemsPerPage"
-      :totalPages="totalPages"
-      @page-change="handlePageChange"
-    />
-
-    <!-- Modal Tambah Produk -->
-    <BaseModal :show="showAddModal" title="Tambah Produk Baru" @close="showAddModal = false">
-      <div class="grid gap-4 text-sm">
-        <div>
-          <label for="nama" class="block mb-1 text-gray-600">Nama</label>
-          <input
-            id="nama"
-            type="text"
-            v-model="newItem.nama"
-            class="w-full border px-3 py-2 rounded"
-          />
-        </div>
-
-        <div>
-          <label for="kode_barang" class="block mb-1 text-gray-600">Kode Barang</label>
-          <input
-            id="kode_barang"
-            type="text"
-            v-model="newItem.kode_barang"
-            class="w-full border px-3 py-2 rounded"
-          />
-        </div>
-
-        <div>
-          <label for="kategori" class="block mb-1 text-gray-600">Kategori</label>
-          <input
-            id="kategori"
-            type="text"
-            v-model="newItem.kategori"
-            class="w-full border px-3 py-2 rounded"
-          />
-        </div>
-
-        <div>
-          <label for="harga" class="block mb-1 text-gray-600">Harga</label>
-          <input
-            id="harga"
-            type="number"
-            v-model="newItem.harga"
-            class="w-full border px-3 py-2 rounded"
-          />
-        </div>
-
-        <div>
-          <label for="jumlah" class="block mb-1 text-gray-600">Jumlah</label>
-          <input
-            id="jumlah"
-            type="number"
-            v-model="newItem.jumlah"
-            class="w-full border px-3 py-2 rounded"
-          />
-        </div>
-
-        <div>
-          <label for="supplier" class="block mb-1 text-gray-600">Supplier</label>
-          <div class="relative">
-            <input
-              type="text"
-              v-model="searchQuery"
-              @input="fetchSuppliers"
-              placeholder="Search supplier..."
-              class="w-full border px-3 py-2 rounded"
-            />
-            <div
-              v-if="filteredSuppliers.length > 0"
-              class="absolute z-10 w-full bg-white shadow-lg mt-1 rounded border"
-            >
-              <ul>
-                <li
-                  v-for="supplier in filteredSuppliers"
-                  :key="supplier.id"
-                  @click="selectSupplier(supplier)"
-                  class="cursor-pointer px-4 py-2 hover:bg-gray-100"
-                >
-                  {{ supplier.nama }}
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
+      <div class="flex items-center space-x-2">
+        <label for="limit" class="text-sm text-gray-700 select-none">Tampilkan</label>
+        <select id="limit" v-model.number="limit" @change="onLimitChange"
+          class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          style="height: 38px;">
+          <option :value="10">10</option>
+          <option :value="20">20</option>
+          <option :value="50">50</option>
+          <option :value="100">100</option>
+        </select>
       </div>
+    </div>
 
-      <template #footer>
-        <button class="bg-gray-200 px-4 py-2 rounded mr-2" @click="showAddModal = false">
-          Batal
-        </button>
-        <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" @click="addItem">
-          Simpan
-        </button>
-      </template>
+    <div class="relative min-h-[200px]">
+      <LoadingCircle v-if="loading" />
+
+      <BaseTable :columns="columns" :rows="rows" class="overflow-x-auto">
+        <template #actions="{ row }">
+          <button @click="openModal(row)"
+            class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-md text-sm mr-3 transition">
+            Edit
+          </button>
+          <button @click="deleteProduk(row.id)"
+            class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm transition">
+            Hapus
+          </button>
+        </template>
+      </BaseTable>
+    </div>
+
+    <div class="flex justify-end mt-6 space-x-4">
+      <BasePagination :currentPage="page" :totalPages="totalPages" @change="changePage" />
+    </div>
+
+    <BaseModal :show="showModal" title="Form Produk" @close="closeModal">
+      <ProdukForm :produk="selectedProduk" @submit="handleSubmit" />
     </BaseModal>
   </div>
 </template>
 
+
 <script setup>
-  import { ref, computed, onMounted } from 'vue';
-  import axios from 'axios';
-  import ProdukTable from '../../components/molecules/ProdukTable.vue';
-  import BaseModal from '../../components/atoms/BaseModal.vue';
-  import BasePagination from '../../components/atoms/BasePagination.vue';
+import { ref, onMounted } from 'vue';
+import BaseTable from '../../components/atoms/BaseTable.vue';
+import BaseModal from '../../components/atoms/BaseModal.vue';
+import BasePagination from '../../components/atoms/BasePagination.vue';
+import ProdukForm from '../../components/produk/ProdukForm.vue';
+import { getProdukList, createProduk, updateProduk, deleteData } from '../../services/produkService.js';
+import LoadingCircle from '../../components/atoms/LoadingCircle.vue';
 
-  const headers = ['Nama Barang', 'Kode Barang', 'Kategori', 'Jumlah', 'Harga'];
+const columns = [
+  { label: 'Nama Produk', key: 'nama' },
+  { label: 'Kode Barang', key: 'kode_barang' },
+  { label: 'Kategori', key: 'kategori' },
+  { label: 'Jumlah', key: 'jumlah' },
+  { label: 'Harga', key: 'harga' },
+  { label: 'Supplier', key: 'supplier_name' },
+  { label: 'Created Date', key: 'created_at' },
+  { label: 'Last Update', key: 'updated_at' },
+];
 
-  const rows = ref([]);
-  const currentPage = ref(1);
-  const totalItems = ref(0);
-  const itemsPerPage = 10;
-  const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage));
-  const showAddModal = ref(false);
+const rows = ref([]);
+const search = ref('');
+const page = ref(1);
+const limit = ref(10);
+const totalPages = ref(1);
+const showModal = ref(false);
+const selectedProduk = ref(null);
+const loading = ref(false);
 
-  // Produk state
-  const newItem = ref({
-    nama: '',
-    kode_barang: '',
-    kategori: '',
-    harga: '',
-    jumlah: '',
-    supplier_id: null,
-  });
+const fetchData = async () => {
+  loading.value = true;
+  try {
+    const response = await getProdukList({
+      search: search.value,
+      page: page.value,
+      limit: limit.value,
+    });
+    rows.value = response.data.data;
 
-  // Supplier state
-  const supplierOptions = ref([]);
-  const filteredSuppliers = ref([]);
-  const searchQuery = ref('');
+    const filteredCount = Number(response.data.filtered);
+    totalPages.value = Math.max(1, Math.ceil(filteredCount / limit.value));
+  } finally {
+    loading.value = false;
+  }
+};
 
-  const selectSupplier = (supplier) => {
-    newItem.value.supplier_id = supplier.id;
-    filteredSuppliers.value = [];
-    searchQuery.value = supplier.nama;
-  };
+const openModal = (produk = null) => {
+  selectedProduk.value = produk;
+  showModal.value = true;
+};
 
-  // Fetch products
-  const fetchProduk = async (page = 1) => {
-    try {
-      const response = await axios.get('/api/produk/list', {
-        params: { page, limit: itemsPerPage },
-      });
+const closeModal = () => {
+  showModal.value = false;
+  selectedProduk.value = null;
+};
 
-      if (response.data.success) {
-        rows.value = response.data.data.data.map((item) => ({
-          id: item.id,
-          nama: item.nama,
-          kode_barang: item.kode_barang,
-          kategori: item.kategori,
-          jumlah: item.jumlah,
-          harga: item.harga,
-        }));
+const handleSubmit = async (formData) => {
+  if (selectedProduk.value) {
+    await updateProduk(selectedProduk.value.id, formData);
+  } else {
+    await createProduk(formData);
+  }
+  closeModal();
+  fetchData();
+};
 
-        totalItems.value = response.data.data.total;
-        currentPage.value = Number(response.data.data.page);
-      }
-    } catch (error) {
-      console.error('Gagal mengambil data produk:', error);
-    }
-  };
+const deleteProduk = async (id) => {
+  let confirmWindow = window.confirm("Apakah anda yakin untuk hapus?");
+  if (confirmWindow) {
+    loading.value = true;
+    await deleteData(id);
+    fetchData();
+  }
+};
 
-  // Fetch suppliers based on search query
-  const fetchSuppliers = async () => {
-    if (!searchQuery.value) {
-      filteredSuppliers.value = [];
-      return;
-    }
+const changePage = (newPage) => {
+  page.value = newPage;
+  fetchData();
+};
 
-    try {
-      const response = await axios.get('/api/supplier/list', {
-        params: { search: searchQuery.value, page: 1, limit: 10 },
-      });
+const onLimitChange = () => {
+  page.value = 1; // reset page to 1 on limit change
+  fetchData();
+};
 
-      if (response.data.success) {
-        filteredSuppliers.value = response.data.data.data;
-      }
-    } catch (error) {
-      console.error('Gagal mengambil supplier:', error);
-    }
-  };
+const onSearchInput = () => {
+  page.value = 1; // reset page to 1 on new search
+  fetchData();
+};
 
-  // Actions
-  const handleEdit = (item) => {
-    console.log('Edit item:', item);
-  };
-
-  const handleDelete = (item) => {
-    console.log('Delete item:', item);
-  };
-
-  const handlePageChange = (page) => {
-    fetchProduk(page);
-  };
-
-  const addItem = async () => {
-    try {
-      const response = await axios.post('/api/produk/create', newItem.value);
-      if (response.data.success) {
-        fetchProduk(currentPage.value);
-        showAddModal.value = false;
-
-        // Reset form
-        Object.assign(newItem.value, {
-          nama: '',
-          kode_barang: '',
-          kategori: '',
-          harga: '',
-          jumlah: '',
-          supplier_id: null,
-        });
-        searchQuery.value = '';
-      }
-    } catch (error) {
-      console.error('Gagal menambah produk:', error);
-    }
-  };
-
-  onMounted(() => {
-    fetchProduk(currentPage.value);
-  });
+onMounted(fetchData);
 </script>
-
-<style scoped>
-  /* Customize modal and dropdown styles as needed */
-</style>
