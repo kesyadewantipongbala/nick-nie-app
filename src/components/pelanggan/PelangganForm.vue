@@ -3,41 +3,28 @@
     @submit.prevent="onSubmit"
     class="space-y-4 max-w-md mx-auto p-4 bg-white rounded-md shadow"
   >
-    <!-- Nama Supplier -->
+    <!-- Nama Pelanggan -->
     <div>
-      <label for="nama" class="block text-sm font-medium text-gray-700">Nama Supplier</label>
+      <label for="nama" class="block text-sm font-medium text-gray-700">Nama Pelanggan</label>
       <input
         id="nama"
         v-model="form.nama"
         type="text"
         required
-        placeholder="Masukkan nama supplier"
+        placeholder="Masukkan nama pelanggan"
         class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
       />
     </div>
 
-    <!-- Alamat -->
+    <!-- Kategori -->
     <div>
-      <label for="alamat" class="block text-sm font-medium text-gray-700">Alamat</label>
-      <textarea
-        id="alamat"
-        v-model="form.alamat"
-        rows="3"
-        required
-        placeholder="Masukkan alamat supplier"
-        class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-      ></textarea>
-    </div>
-
-    <!-- Kontak -->
-    <div>
-      <label for="kontak" class="block text-sm font-medium text-gray-700">Kontak</label>
+      <label for="category" class="block text-sm font-medium text-gray-700">Kategori</label>
       <input
-        id="kontak"
-        v-model="form.kontak"
+        id="category"
+        v-model="form.category"
         type="text"
         required
-        placeholder="Masukkan nomor kontak"
+        placeholder="Masukkan kategori"
         class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
       />
     </div>
@@ -49,7 +36,7 @@
         id="description"
         v-model="form.description"
         rows="3"
-        placeholder="Masukkan deskripsi supplier"
+        placeholder="Masukkan deskripsi"
         class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
       ></textarea>
     </div>
@@ -71,7 +58,7 @@
   import { ref, watch } from 'vue';
 
   const props = defineProps({
-    supplier: Object,
+    pelanggan: Object,
   });
 
   const emit = defineEmits(['submit']);
@@ -80,26 +67,23 @@
 
   const form = ref({
     nama: '',
-    alamat: '',
-    kontak: '',
+    category: '',
     description: '',
   });
 
   watch(
-    () => props.supplier,
+    () => props.pelanggan,
     (newVal) => {
       if (newVal) {
         form.value = {
           nama: newVal.nama || '',
-          alamat: newVal.alamat || '',
-          kontak: newVal.kontak || '',
+          category: newVal.category || '',
           description: newVal.description || '',
         };
       } else {
         form.value = {
           nama: '',
-          alamat: '',
-          kontak: '',
+          category: '',
           description: '',
         };
       }
@@ -110,8 +94,8 @@
   const onSubmit = () => {
     loading.value = true;
 
-    if (!form.value.nama || !form.value.alamat || !form.value.kontak) {
-      alert('Mohon lengkapi nama, alamat, dan kontak supplier.');
+    if (!form.value.nama || !form.value.category) {
+      alert('Mohon lengkapi nama dan kategori pelanggan.');
       loading.value = false;
       return;
     }

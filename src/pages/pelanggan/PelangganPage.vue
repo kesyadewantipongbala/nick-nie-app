@@ -1,12 +1,12 @@
 <template>
   <div class="px-4 py-6 w-full mx-auto">
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-semibold">Data Produk</h1>
+      <h1 class="text-2xl font-semibold">Data Pelanggan</h1>
       <button
         @click="openModal()"
         class="bg-[#007bff] hover:bg-lime-600 text-white px-4 py-2 rounded-md text-sm transition"
       >
-        + Tambah Produk
+        + Tambah Pelanggan
       </button>
     </div>
 
@@ -15,7 +15,7 @@
         v-model="search"
         @input="onSearchInput"
         type="text"
-        placeholder="Cari produk..."
+        placeholder="Cari pelanggan..."
         class="flex-grow px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
         style="height: 38px"
       />
@@ -49,7 +49,7 @@
             Edit
           </button>
           <button
-            @click="deleteProduk(row.id)"
+            @click="deletePelanggan(row.id)"
             class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm transition"
           >
             Hapus
@@ -62,8 +62,8 @@
       <BasePagination :currentPage="page" :totalPages="totalPages" @change="changePage" />
     </div>
 
-    <BaseModal :show="showModal" title="Form Produk" @close="closeModal">
-      <ProdukForm :produk="selectedProduk" @submit="handleSubmit" />
+    <BaseModal :show="showModal" title="Form Pelanggan" @close="closeModal">
+      <PelangganForm :pelanggan="selectedPelanggan" @submit="handleSubmit" />
     </BaseModal>
   </div>
 </template>
@@ -73,24 +73,21 @@
   import BaseTable from '../../components/atoms/BaseTable.vue';
   import BaseModal from '../../components/atoms/BaseModal.vue';
   import BasePagination from '../../components/atoms/BasePagination.vue';
-  import ProdukForm from '../../components/produk/ProdukForm.vue';
+  import PelangganForm from '../../components/pelanggan/PelangganForm.vue';
   import {
-    getProdukList,
-    createProduk,
-    updateProduk,
-    deleteData,
-  } from '../../services/produkService.js';
+    getPelangganList,
+    createPelanggan,
+    updatePelanggan,
+    deletePelangganData,
+  } from '../../services/pelangganService.js';
   import LoadingCircle from '../../components/atoms/LoadingCircle.vue';
 
   const columns = [
-    { label: 'Nama Produk', key: 'nama' },
-    { label: 'Kode Barang', key: 'kode_barang' },
-    { label: 'Kategori', key: 'kategori' },
-    { label: 'Jumlah', key: 'jumlah' },
-    { label: 'Harga', key: 'harga' },
-    { label: 'Supplier', key: 'supplier_name' },
-    { label: 'Created Date', key: 'created_at' },
-    { label: 'Last Update', key: 'updated_at' },
+    { label: 'Nama Pelanggan', key: 'nama' },
+    { label: 'Kategori', key: 'category' },
+    { label: 'Deskripsi', key: 'description' },
+    { label: 'Tanggal Dibuat', key: 'created_at' },
+    { label: 'Terakhir Update', key: 'updated_at' },
   ];
 
   const rows = ref([]);
@@ -99,51 +96,52 @@
   const limit = ref(10);
   const totalPages = ref(1);
   const showModal = ref(false);
-  const selectedProduk = ref(null);
+  const selectedPelanggan = ref(null);
   const loading = ref(false);
 
   const fetchData = async () => {
     loading.value = true;
     try {
-      const response = await getProdukList({
+      const response = await getPelangganList({
         search: search.value,
         page: page.value,
         limit: limit.value,
       });
       rows.value = response.data.data;
 
-      const filteredCount = Number(response.data.filtered);
+      const filteredCount = Number(
+        response.data.filtered || response.data.total || rows.value.length
+      );
       totalPages.value = Math.max(1, Math.ceil(filteredCount / limit.value));
     } finally {
       loading.value = false;
     }
   };
 
-  const openModal = (produk = null) => {
-    selectedProduk.value = produk;
+  const openModal = (pelanggan = null) => {
+    selectedPelanggan.value = pelanggan;
     showModal.value = true;
   };
 
   const closeModal = () => {
     showModal.value = false;
-    selectedProduk.value = null;
+    selectedPelanggan.value = null;
   };
 
   const handleSubmit = async (formData) => {
-    if (selectedProduk.value) {
-      await updateProduk(selectedProduk.value.id, formData);
+    if (selectedPelanggan.value) {
+      await updatePelanggan(selectedPelanggan.value.id, formData);
     } else {
-      await createProduk(formData);
+      await createPelanggan(formData);
     }
     closeModal();
     fetchData();
   };
 
-  const deleteProduk = async (id) => {
-    let confirmWindow = window.confirm('Apakah anda yakin untuk hapus?');
-    if (confirmWindow) {
+  const deletePelanggan = async (id) => {
+    if (window.confirm('Apakah Anda yakin ingin menghapus data pelanggan ini?')) {
       loading.value = true;
-      await deleteData(id);
+      await deletePelangganData(id);
       fetchData();
     }
   };
@@ -154,12 +152,12 @@
   };
 
   const onLimitChange = () => {
-    page.value = 1; // reset page to 1 on limit change
+    page.value = 1;
     fetchData();
   };
 
   const onSearchInput = () => {
-    page.value = 1; // reset page to 1 on new search
+    page.value = 1;
     fetchData();
   };
 

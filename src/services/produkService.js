@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export const getProdukList = async ({ search = '', page = 1, limit = 10 }) => {
   const response = await axios.get(`/api/produk/list`, {
-    params: { search, page, limit }
+    params: { search, page, limit },
   });
   return response.data;
 };

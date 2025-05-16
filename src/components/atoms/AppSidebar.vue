@@ -23,6 +23,7 @@
       <router-link
         to="data_pelanggan"
         class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition"
+        active-class="bg-lime-100 font-semibold text-lime-600"
       >
         Data Pelanggan
       </router-link>
@@ -30,6 +31,7 @@
       <router-link
         to="data_supplier"
         class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition"
+        active-class="bg-lime-100 font-semibold text-lime-600"
       >
         Data Pemasok
       </router-link>
@@ -37,6 +39,7 @@
       <router-link
         to="pembelian"
         class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition"
+        active-class="bg-lime-100 font-semibold text-lime-600"
       >
         Pembelian
       </router-link>
@@ -44,6 +47,7 @@
       <router-link
         to="penjualan"
         class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition"
+        active-class="bg-lime-100 font-semibold text-lime-600"
       >
         Penjualan
       </router-link>
@@ -51,6 +55,7 @@
       <router-link
         to="pengaturan"
         class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition"
+        active-class="bg-lime-100 font-semibold text-lime-600"
       >
         Pengaturan
       </router-link>
