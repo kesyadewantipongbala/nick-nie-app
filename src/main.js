@@ -5,7 +5,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-axios.defaults.baseURL = 'http://13.239.133.55:5000';
+axios.defaults.baseURL = 'https://robert-praise-calculate-singer.trycloudflare.com/';
 const token = Cookies.get('token');
 if (token) {
   axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;

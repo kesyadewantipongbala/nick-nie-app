@@ -2,7 +2,9 @@ import { createStore } from 'vuex';
 
 const store = createStore({
   state: {
-    baseURL: process.env.VUE_APP_BASE_URL || 'http://13.239.133.55:5000/api/v1', // Atau variabel global lainnya
+    baseURL:
+      process.env.VUE_APP_BASE_URL ||
+      'https://robert-praise-calculate-singer.trycloudflare.com//api/v1', // Atau variabel global lainnya
   },
   mutations: {},
   actions: {},

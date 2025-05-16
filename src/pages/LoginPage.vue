@@ -25,16 +25,19 @@
     errorMsg.value = '';
 
     try {
-      const response = await fetch('http://13.239.133.55:5000/api/user/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: username.value,
-          password: password.value,
-        }),
-      });
+      const response = await fetch(
+        'https://robert-praise-calculate-singer.trycloudflare.com//api/user/login',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: username.value,
+            password: password.value,
+          }),
+        }
+      );
 
       const data = await response.json();
 

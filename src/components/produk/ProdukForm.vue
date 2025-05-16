@@ -138,9 +138,8 @@
 </template>
 
 <script setup>
-  import { ref, watch, onMounted } from 'vue';
+  import { ref, watch, onMounted, defineEmits } from 'vue';
   import { fetchSuppliers, getSupplierById } from '../../services/supplierService';
-  import { defineEmits } from 'vue';
 
   const props = defineProps({
     produk: Object,
