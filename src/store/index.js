@@ -4,7 +4,7 @@ const store = createStore({
   state: {
     baseURL:
       process.env.VUE_APP_BASE_URL ||
-      'https://robert-praise-calculate-singer.trycloudflare.com//api/v1', // Atau variabel global lainnya
+      'https://robert-praise-calculate-singer.trycloudflare.com/api/v1', // Atau variabel global lainnya
   },
   mutations: {},
   actions: {},

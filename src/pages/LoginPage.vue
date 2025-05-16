@@ -26,7 +26,7 @@
 
     try {
       const response = await fetch(
-        'https://robert-praise-calculate-singer.trycloudflare.com//api/user/login',
+        'https://robert-praise-calculate-singer.trycloudflare.com/api/user/login',
         {
           method: 'POST',
           headers: {
