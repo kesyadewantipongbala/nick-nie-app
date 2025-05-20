@@ -15,6 +15,7 @@
   const router = useRouter();
 
   const username = ref(localStorage.getItem('DATA_USERNAME') || ''); // Ambil username dari localStorage
+  const profilePic = 'https://api.dicebear.com/7.x/initials/svg?seed='+username.value;
 
   const breadcrumb = computed(() => {
     return route.meta.title || 'Tidak Diketahui';
@@ -41,7 +42,7 @@
       <div class="flex items-center space-x-4 cursor-pointer" @click="toggleDropdown">
         <span class="text-gray-700">{{ username }}</span>
         <img
-          src="https://i.pravatar.cc/40"
+          :src="profilePic"
           alt="Avatar"
           class="w-10 h-10 rounded-full object-cover border-2 border-lime-400"
         />
