@@ -57,16 +57,43 @@
       />
     </div>
 
+    <!-- Satuan -->
+    <div>
+      <label for="satuan" class="block text-sm font-medium text-gray-700">Satuan</label>
+      <input
+        id="satuan"
+        v-model="form.satuan"
+        type="text"
+        required
+        placeholder="Masukkan satuan (contoh: pcs, kg, dll)"
+        class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+      />
+    </div>
+
     <!-- Harga -->
     <div>
-      <label for="harga" class="block text-sm font-medium text-gray-700">Harga</label>
+      <label for="harga_beli" class="block text-sm font-medium text-gray-700">Harga Beli</label>
       <input
-        id="harga"
-        v-model.number="form.harga"
+        id="harga_beli"
+        v-model.number="form.harga_beli"
         type="number"
         min="0"
         required
-        placeholder="Masukkan harga"
+        placeholder="Masukkan harga beli"
+        class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+      />
+    </div>
+
+    <!-- Harga -->
+    <div>
+      <label for="harga_jual" class="block text-sm font-medium text-gray-700">Harga Jual</label>
+      <input
+        id="harga_jual"
+        v-model.number="form.harga_jual"
+        type="number"
+        min="0"
+        required
+        placeholder="Masukkan harga jual"
         class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
       />
     </div>
@@ -159,7 +186,9 @@
     kode_barang: '',
     kategori: '',
     jumlah: 0,
-    harga: 0,
+    harga_jual: 0,
+    harga_beli: 0,
+    satuan: '',
     supplier_id: null,
   });
 
@@ -233,7 +262,9 @@
           kode_barang: newVal.kode_barang || '',
           kategori: newVal.kategori || '',
           jumlah: newVal.jumlah || 0,
-          harga: newVal.harga || 0,
+          harga_jual: newVal.harga_jual || 0,
+          harga_beli: newVal.harga_beli || 0,
+          satuan: newVal.satuan || '',
           supplier_id: newVal.supplier_id || null,
         };
 
