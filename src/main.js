@@ -6,7 +6,9 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 
 axios.defaults.baseURL = 'https://robert-praise-calculate-singer.trycloudflare.com';
+
 const token = Cookies.get('token');
+
 if (token) {
   axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 }
@@ -18,8 +20,9 @@ import DashboardPage from './pages/DashboardPage.vue';
 import ProdukPage from './pages/produk/ProdukPage.vue';
 import PelangganPage from './pages/pelanggan/PelangganPage.vue';
 import SupplierPage from './pages/supplier/SupplierPage.vue';
-
-// import store from './store';
+import PembelianPage from './pages/pembelian/PembelianPage.vue';
+import PenjualanPage from './pages/penjualan/PenjualanPage.vue';
+import NotFoundPage from './pages/NotFoundPage.vue';
 
 const pinia = createPinia();
 
@@ -56,11 +59,21 @@ const router = createRouter({
       meta: { title: 'Data Supplier' },
     },
     {
+      path: '/pembelian',
+      name: 'PembelianPage',
+      component: PembelianPage,
+      meta: { title: 'Data Pembelian' },
+    },
+    {
+      path: '/penjualan',
+      name: 'PenjualanPage',
+      component: PenjualanPage,
+      meta: { title: 'Data Penjualan' },
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'NotFound',
-      component: {
-        template: '<div class="p-8 text-red-600">404 - Halaman Tidak Ditemukan</div>',
-      },
+      component: NotFoundPage,
       meta: { title: 'Not Found' },
     },
   ],
