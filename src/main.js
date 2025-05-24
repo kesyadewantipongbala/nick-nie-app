@@ -79,5 +79,4 @@ const router = createRouter({
   ],
 });
 
-// app.use(store);
 app.use(pinia).use(router).mount('#app');
