@@ -1,6 +1,6 @@
 <template>
   <form
-    @submit.prevent="onSubmit"
+    @submit.prevent="showConfirmationModal"
     class="space-y-4 max-w-md mx-auto p-4 bg-white rounded-md shadow"
   >
     <div class="relative">
@@ -166,6 +166,17 @@
       </button>
     </div>
 
+    <div class="border-t pt-4 mt-4 space-y-2">
+      <div class="flex justify-between text-sm font-medium text-gray-700">
+        <span>Total Unit Produk:</span>
+        <span class="font-semibold">{{ totalProductUnits }}</span>
+      </div>
+      <div class="flex justify-between text-base font-semibold text-gray-800">
+        <span>Total Keseluruhan Pembelian:</span>
+        <span class="text-blue-600">{{ formatRupiah(grandTotalPurchase) }}</span>
+      </div>
+    </div>
+
     <div>
       <label for="note" class="block text-sm font-medium text-gray-700">Catatan</label>
       <textarea
@@ -186,13 +197,71 @@
         {{ loading ? 'Menyimpan...' : 'Simpan' }}
       </button>
     </div>
+
+    <BaseModal :show="showConfirmModal" title="Konfirmasi Pembelian" @close="closeConfirmModal">
+      <div class="space-y-3">
+        <p>Mohon periksa kembali data pembelian Anda:</p>
+        <div class="border-t pt-2">
+          <p class="font-semibold text-gray-800">Supplier:</p>
+          <p>{{ supplierSearch }}</p>
+        </div>
+        <div class="border-t pt-2">
+          <p class="font-semibold text-gray-800">Catatan:</p>
+          <p>{{ form.catatan || '-' }}</p>
+        </div>
+        <div class="border-t pt-2">
+          <p class="font-semibold text-gray-800">Produk Dibeli:</p>
+          <ul class="list-disc pl-5">
+            <li v-for="(item, index) in form.items" :key="index" class="text-sm">
+              {{ item.productSearch }} ({{ item.quantity }} unit) @
+              {{ formatRupiah(item.harga_beli) }}
+              <span
+                v-if="
+                  item.harga_jual !== null &&
+                  item.harga_jual !== undefined &&
+                  !isNaN(item.harga_jual)
+                "
+              >
+                (Jual: {{ formatRupiah(item.harga_jual) }})</span
+              >
+            </li>
+          </ul>
+        </div>
+        <div class="border-t pt-2">
+          <p class="font-semibold text-gray-800">Total Unit Produk: {{ totalProductUnits }}</p>
+          <p class="font-semibold text-blue-600">
+            Total Keseluruhan Pembelian: {{ formatRupiah(grandTotalPurchase) }}
+          </p>
+        </div>
+      </div>
+      <template #footer>
+        <div class="flex justify-end space-x-2">
+          <button
+            type="button"
+            @click="closeConfirmModal"
+            class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition"
+          >
+            Batal
+          </button>
+          <button
+            type="button"
+            @click="submitConfirmed"
+            :disabled="loading"
+            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition disabled:opacity-50"
+          >
+            {{ loading ? 'Mengirim...' : 'Konfirmasi & Simpan' }}
+          </button>
+        </div>
+      </template>
+    </BaseModal>
   </form>
 </template>
 
 <script setup>
-  import { ref, watch, onMounted } from 'vue';
-  import { getSupplierList } from '../../services/supplierService'; // Assuming you have this service
-  import { getProdukList } from '../../services/produkService'; // Assuming you have this service
+  import { ref, watch, onMounted, computed } from 'vue';
+  import { getSupplierList } from '../../services/supplierService';
+  import { getProdukList } from '../../services/produkService';
+  import BaseModal from '../atoms/BaseModal.vue'; // Make sure to import BaseModal
 
   const props = defineProps({
     purchase: Object,
@@ -201,6 +270,7 @@
   const emit = defineEmits(['submit']);
 
   const loading = ref(false);
+  const showConfirmModal = ref(false); // New state for confirmation modal
 
   // Supplier related state
   const suppliers = ref([]);
@@ -228,10 +298,34 @@
     highlightedProductIndex: -1,
   });
 
+  // --- Computed Properties for Totals ---
+  const totalProductUnits = computed(() => {
+    return form.value.items.reduce((sum, item) => {
+      return sum + (item.quantity && !isNaN(item.quantity) ? item.quantity : 0);
+    }, 0);
+  });
+
+  const grandTotalPurchase = computed(() => {
+    return form.value.items.reduce((sum, item) => {
+      const quantity = item.quantity && !isNaN(item.quantity) ? item.quantity : 0;
+      const hargaBeli = item.harga_beli && !isNaN(item.harga_beli) ? item.harga_beli : 0;
+      return sum + quantity * hargaBeli;
+    }, 0);
+  });
+
+  // --- Utility for Rupiah Formatting ---
+  const formatRupiah = (amount) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
   // --- Supplier Logic ---
   const fetchSuppliers = async () => {
     try {
-      const response = await getSupplierList({ limit: 9999 }); // Fetch all suppliers
+      const response = await getSupplierList({ limit: 9999 });
       suppliers.value = response.data.data;
       filterSuppliers(supplierSearch.value);
     } catch (error) {
@@ -252,7 +346,7 @@
     supplierDropdownOpen.value = true;
     highlightedSupplierIndex.value = -1;
     filterSuppliers(supplierSearch.value);
-    form.value.supplier_id = null; // Clear selected supplier ID if input changes
+    form.value.supplier_id = null;
   };
 
   const selectSupplier = (supplier) => {
@@ -289,9 +383,8 @@
 
   const fetchProducts = async () => {
     try {
-      const response = await getProdukList({ limit: 9999 }); // Fetch all products
+      const response = await getProdukList({ limit: 9999 });
       allProducts.value = response.data.data;
-      // Initialize filteredProducts for existing items if editing
       form.value.items.forEach((item) => {
         item.filteredProducts = [...allProducts.value];
       });
@@ -319,17 +412,17 @@
     item.productDropdownOpen = true;
     item.highlightedProductIndex = -1;
     filterProducts(itemIndex, item.productSearch);
-    item.product_id = null; // Clear selected product ID if input changes
-    item.harga_beli = 0; // Reset price as it might be from the old product
+    item.product_id = null;
+    item.harga_beli = 0;
     item.harga_jual = null;
   };
 
   const selectProduct = (itemIndex, product) => {
     const item = form.value.items[itemIndex];
     item.product_id = product.id;
-    item.productSearch = `${product.nama} (${product.kode_barang})`; // Display name and code
-    item.harga_beli = product.harga_beli || 0; // Pre-fill purchase price from product
-    item.harga_jual = product.harga_jual || null; // Pre-fill selling price from product
+    item.productSearch = `${product.nama} (${product.kode_barang})`;
+    item.harga_beli = product.harga_beli || 0;
+    item.harga_jual = product.harga_jual || null;
     item.productDropdownOpen = false;
     item.highlightedProductIndex = -1;
   };
@@ -364,7 +457,13 @@
   };
 
   const removeItem = (index) => {
-    form.value.items.splice(index, 1);
+    if (form.value.items.length > 1) {
+      // Ensure at least one item remains
+      form.value.items.splice(index, 1);
+    } else {
+      // Optionally, clear the last item instead of removing it
+      form.value.items = [defaultItem()];
+    }
   };
 
   // --- Watchers and Initialization ---
@@ -372,34 +471,30 @@
     () => props.purchase,
     async (newVal) => {
       if (newVal) {
-        // For editing existing purchase
         form.value.supplier_id = newVal.supplier_id || null;
         form.value.catatan = newVal.catatan || '';
-        supplierSearch.value = newVal.supplier_name || ''; // Assuming supplier_name comes with the purchase object
+        supplierSearch.value = newVal.supplier_name || '';
 
-        // Fetch existing items if available
         if (newVal.items && newVal.items.length > 0) {
           form.value.items = newVal.items.map((item) => ({
             product_id: item.product_id,
             quantity: item.quantity,
             harga_beli: item.harga_beli,
-            // Only include harga_jual if it's explicitly set and not null/undefined
             harga_jual:
               item.harga_jual !== undefined && item.harga_jual !== null ? item.harga_jual : null,
             productSearch: `${item.product_name || ''} (${item.kode_barang || ''})`,
             productDropdownOpen: false,
-            filteredProducts: [...allProducts.value], // Initialize with all products for filtering
+            filteredProducts: [...allProducts.value],
             highlightedProductIndex: -1,
           }));
         } else {
-          form.value.items = [defaultItem()]; // Start with one empty item if no items exist
+          form.value.items = [defaultItem()];
         }
       } else {
-        // For new purchase
         form.value = {
           supplier_id: null,
           catatan: '',
-          items: [defaultItem()], // Start with one empty item
+          items: [defaultItem()],
         };
         supplierSearch.value = '';
       }
@@ -407,41 +502,46 @@
     { immediate: true, deep: true }
   );
 
-  // --- Form Submission ---
-  const onSubmit = () => {
-    loading.value = true;
-
+  // --- Confirmation Modal Logic ---
+  const showConfirmationModal = () => {
+    // Perform initial form validation before showing modal
     if (!form.value.supplier_id) {
       alert('Mohon pilih supplier.');
-      loading.value = false;
       return;
     }
     if (form.value.items.length === 0) {
       alert('Mohon tambahkan setidaknya satu produk pembelian.');
-      loading.value = false;
       return;
     }
     for (const item of form.value.items) {
-      if (!item.product_id || item.quantity <= 0 || item.harga_beli < 0) {
+      if (!item.product_id || item.quantity <= 0 || item.harga_beli <= 0) {
         alert(
-          'Setiap produk pembelian harus memiliki produk, jumlah yang valid, dan harga beli yang valid.'
+          'Setiap produk pembelian harus memiliki produk, jumlah yang valid, dan harga beli yang valid (lebih dari 0).'
         );
-        loading.value = false;
         return;
       }
     }
 
-    // Construct the desired output format
+    showConfirmModal.value = true;
+  };
+
+  const closeConfirmModal = () => {
+    showConfirmModal.value = false;
+  };
+
+  const submitConfirmed = () => {
+    // This is the actual submission logic, called after user confirms
+    loading.value = true; // Set loading here, not when showing modal
+
     const payload = {
       supplier_id: form.value.supplier_id,
-      catatan: form.value.catatan || null, // Ensure catatan is null if empty string
+      catatan: form.value.catatan || null,
       items: form.value.items.map(({ product_id, quantity, harga_beli, harga_jual }) => {
         const itemPayload = {
           product_id,
           quantity,
           harga_beli,
         };
-        // Only add harga_jual if it's a valid number
         if (harga_jual !== null && harga_jual !== undefined && !isNaN(harga_jual)) {
           itemPayload.harga_jual = harga_jual;
         }
@@ -451,6 +551,7 @@
 
     emit('submit', payload, () => {
       loading.value = false;
+      closeConfirmModal(); // Close confirmation modal after submission
     });
   };
 

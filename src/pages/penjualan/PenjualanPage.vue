@@ -84,8 +84,8 @@
   import LoadingCircle from '../../components/atoms/LoadingCircle.vue';
 
   const columns = [
-    { label: 'Pelanggan', key: 'customer_id' },
-    { label: 'User', key: 'user_id' },
+    { label: 'Pelanggan', key: 'customer_name' },
+    { label: 'User', key: 'user_name' },
     { label: 'ID Nota', key: 'transaction_code' },
     { label: 'Total Harga', key: 'total_harga' },
     { label: 'Tanggal Dibuat', key: 'created_at' },
