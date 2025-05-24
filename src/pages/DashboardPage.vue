@@ -1,3 +1,4 @@
+<!-- src\pages\DashboardPage.vue -->
 <script setup>
   import { ref } from 'vue';
   import SummaryBox from '../components/atoms/SummaryBox.vue';

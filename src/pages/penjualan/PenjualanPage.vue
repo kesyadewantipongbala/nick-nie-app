@@ -1,3 +1,4 @@
+<!-- src\pages\penjualan\PenjualanPage.vue -->
 <template>
   <div class="px-4 py-6 w-full mx-auto">
     <div class="flex justify-between items-center mb-6">
@@ -83,8 +84,8 @@
   import LoadingCircle from '../../components/atoms/LoadingCircle.vue';
 
   const columns = [
-    { label: 'Pelanggan', key: 'customer_name' },
-    { label: 'User', key: 'user_name' },
+    { label: 'Pelanggan', key: 'customer_id' },
+    { label: 'User', key: 'user_id' },
     { label: 'ID Nota', key: 'transaction_code' },
     { label: 'Total Harga', key: 'total_harga' },
     { label: 'Tanggal Dibuat', key: 'created_at' },
