@@ -83,7 +83,7 @@
   import LoadingCircle from '../../components/atoms/LoadingCircle.vue';
 
   const columns = [
-    { label: 'Supplier', key: 'supplier_id' },
+    { label: 'Supplier', key: 'supplier_name' },
     { label: 'Total Biaya', key: 'total_biaya' },
     { label: 'Catatan', key: 'catatan' },
     { label: 'Tanggal Dibuat', key: 'created_at' },
