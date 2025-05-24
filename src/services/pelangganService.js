@@ -1,3 +1,4 @@
+// src\services\pelangganService.js
 import axios from 'axios';
 
 export const getPelangganList = async ({ search = '', page = 1, limit = 10 }) => {

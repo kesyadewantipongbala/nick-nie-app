@@ -1,3 +1,4 @@
+// src\services\transactionService.js
 import axios from 'axios';
 
 export const getTransactionList = async ({ search = '', page = 1, limit = 10 }) => {
@@ -21,3 +22,8 @@ export const deleteTransactionData = async (id) => {
   const response = await axios.post(`/api/transaction/delete/${id}`);
   return response.data;
 };
+
+export const getTransactionDetail = async (id) => {
+  const response = await axios.get(`/api/transaction/${id}`);
+  return response.data;
+}

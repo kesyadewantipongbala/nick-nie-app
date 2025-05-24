@@ -1,17 +1,56 @@
 <template>
-  <form @submit.prevent="onSubmit" class="space-y-6 bg-white rounded-md">
-    <div>
-      <label for="customer" class="block text-sm font-medium text-gray-700 mb-1"
-        >Nama Customer (ID)</label
-      >
+  <form @submit.prevent="prepareAndShowConfirmation" class="space-y-6 bg-white rounded-md">
+    <div class="relative">
+      <label for="customer-search" class="block text-sm font-medium text-gray-700 mb-1">
+        Pelanggan
+      </label>
       <input
-        id="customer"
-        v-model="form.customer_id"
-        type="number"
-        required
-        placeholder="Masukkan ID customer"
-        class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+        id="customer-search"
+        type="text"
+        v-model="customerSearchTerm"
+        @input="onCustomerSearch($event.target.value)"
+        @focus="isCustomerDropdownOpen = true"
+        @blur="handleCustomerSearchBlur"
+        @keydown.down.prevent="highlightNextCustomer"
+        @keydown.up.prevent="highlightPrevCustomer"
+        @keydown.enter.prevent="selectHighlightedCustomer"
+        placeholder="Cari atau pilih pelanggan..."
+        autocomplete="off"
+        class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 pr-10"
       />
+      <button
+        v-if="form.customer_id || customerSearchTerm"
+        type="button"
+        @click="clearCustomer"
+        class="absolute right-3 top-[calc(1.5rem+0.5rem+2px)] transform -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xl z-10"
+      >
+        &times;
+      </button>
+      <ul
+        v-if="isCustomerDropdownOpen && customerOptions.length > 0"
+        class="absolute z-30 mt-1 max-h-48 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
+      >
+        <li
+          v-for="(customer, custIndex) in customerOptions"
+          :key="customer.id"
+          @mousedown.prevent="selectCustomer(customer)"
+          :class="[
+            'cursor-pointer select-none py-2 px-4',
+            custIndex === highlightedCustomerIndex ? 'bg-blue-600 text-white' : 'text-gray-900 hover:bg-blue-50',
+          ]"
+        >
+          {{ customer.nama }} <span v-if="customer.category" class="text-xs text-gray-500">({{ customer.category }})</span>
+        </li>
+      </ul>
+      <div
+        v-if="isCustomerDropdownOpen && customerOptions.length === 0 && customerSearchTerm.trim() !== ''"
+        class="absolute z-30 mt-1 w-full rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5"
+      >
+        <p class="px-4 py-2 text-sm text-gray-500">
+          Pelanggan tidak ditemukan.
+        </p>
+      </div>
+       <input type="hidden" v-model="form.customer_id" />
     </div>
 
     <hr />
@@ -35,17 +74,12 @@
           @keydown.enter.prevent="selectHighlightedProduct(index)"
           placeholder="Ketik nama atau kode produk..."
           autocomplete="off"
-          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 pr-16"
-        />
-        <LoadingCircle
-          v-if="loadingProducts[index]"
-          size="sm"
-          class="absolute right-10 top-[calc(1.5rem+0.5rem+2px)] transform -translate-y-1/2 z-10"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 pr-10"
         />
         <button
-          v-if="item.product_id"
+          v-if="item.product_id || item.product_search_term"
           type="button"
-          @click="clearProduct(index)"
+          @click="clearProductSearch(index)"
           class="absolute right-3 top-[calc(1.5rem+0.5rem+2px)] transform -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xl z-10"
         >
           &times;
@@ -66,9 +100,14 @@
             {{ product.nama }} ({{ product.kode_barang }}) - Stok: {{ product.jumlah }}
           </li>
         </ul>
-        <p v-if="item.is_product_dropdown_open && !item.product_options.length && item.product_search_term && !loadingProducts[index]" class="mt-1 text-xs text-gray-500">
-          Produk tidak ditemukan.
-        </p>
+        <div
+          v-if="item.is_product_dropdown_open && item.product_options.length === 0 && item.product_search_term.trim() !== ''"
+          class="absolute z-20 mt-1 w-full rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5"
+        >
+            <p class="px-4 py-2 text-sm text-gray-500">
+            Produk tidak ditemukan.
+            </p>
+        </div>
       </div>
 
       <div>
@@ -84,49 +123,55 @@
           placeholder="Jumlah"
           class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
         />
-        <p v-if="item.product_id && typeof item.original_price === 'number'" class="text-xs text-gray-500 mt-1">
-            Harga Asli: Rp {{ item.original_price.toLocaleString('id-ID') }} / {{ item.satuan }}
+        <p v-if="item.product_id && typeof item.original_unit_price === 'number'" class="text-xs text-gray-500 mt-1">
+            Harga Satuan Asli: Rp {{ item.original_unit_price.toLocaleString('id-ID') }} / {{ item.satuan }}
         </p>
       </div>
 
       <div v-if="item.product_id">
         <label :for="'custom-price-display-' + index" class="block text-sm font-medium text-gray-700 mb-1">
-            Harga Jual Satuan (Opsional)
+            Harga Satuan Kustom (Opsional)
         </label>
         <div
             :id="'custom-price-display-' + index"
             @click="focusCustomPriceInput(index)"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm cursor-text bg-gray-50"
-            :class="{ 'text-gray-400 italic': !item.custom_price_display_value && !item.is_editing_custom_price }"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm cursor-text bg-gray-50 h-[38px] flex items-center"
+            :class="{ 'text-gray-400 italic': !item.custom_unit_price_display_value && !item.is_editing_custom_unit_price }"
         >
-            {{ item.is_editing_custom_price ? item.custom_price_input : (item.custom_price_display_value || (typeof item.original_price === 'number' ? `Rp ${item.original_price.toLocaleString('id-ID')}` : 'Rp 0')) }}
+            {{ item.is_editing_custom_unit_price ? (item.custom_unit_price_input !== '' ? item.custom_unit_price_input : '') : (item.custom_unit_price_display_value || (typeof item.original_unit_price === 'number' ? `Rp ${item.original_unit_price.toLocaleString('id-ID')}` : 'Rp 0')) }}
+            <span v-if="item.is_editing_custom_unit_price && (item.custom_unit_price_input === '' || item.custom_unit_price_input === null)" class="select-none">&nbsp;</span>
         </div>
         <input
-            :ref="el => {
-              if (!itemRefs.value[index]) {
-                itemRefs.value[index] = {}; // Inisialisasi objek jika belum ada
-              }
-              itemRefs.value[index].customPriceInput = el;
-            }"
+            :ref="el => item.customPriceInputElement = el"
             type="number"
             min="0"
-            v-model.number="item.custom_price_input"
+            v-model.number="item.custom_unit_price_input"
             @blur="formatCustomPriceDisplay(index)"
             @focus="onFocusCustomPrice(index)"
             @input="updateCustomPriceDisplayOnInput(index)"
-            placeholder="Harga kustom"
+            placeholder="Harga satuan kustom"
             class="opacity-0 w-0 h-0 absolute"
         />
-        <p class="text-xs text-gray-500 mt-1">Klik untuk mengubah harga jual. Kosongkan untuk harga standar.</p>
+        <p class="text-xs text-gray-500 mt-1">Klik untuk mengubah harga satuan. Kosongkan untuk harga standar.</p>
       </div>
 
+      <div v-if="item.product_id && item.quantity > 0 && typeof item.final_unit_price === 'number'" class="text-right mt-2 border-t pt-2">
+        <p class="text-sm font-semibold text-gray-700">
+            Subtotal Item:
+            <span class="text-blue-600">
+                Rp {{ (item.quantity * item.final_unit_price).toLocaleString('id-ID') }}
+            </span>
+        </p>
+      </div>
 
       <button @click="removeItem(index)" type="button" class="text-red-500 hover:text-red-700 text-sm font-medium absolute top-2 right-2">
         Hapus
       </button>
     </div>
 
-    <div class="flex justify-between items-center">
+    <hr class="my-4" v-if="form.items.length > 0 && form.items.some(i => i.product_id)"/>
+
+    <div class="flex justify-between items-center mb-6">
         <button
         @click="addItem"
         type="button"
@@ -134,17 +179,19 @@
         >
         + Tambah Produk
         </button>
-        <div class="text-lg font-semibold">
-            Total Estimasi: Rp {{ totalEstimatedPrice.toLocaleString('id-ID') }}
+        <div class="text-lg font-semibold text-gray-800">
+            Total Keseluruhan:
+            <span class="text-emerald-600">
+                Rp {{ totalEstimatedPrice.toLocaleString('id-ID') }}
+            </span>
         </div>
     </div>
 
-
-    <div class="flex justify-end pt-4">
+    <div class="flex justify-end pt-4 border-t border-gray-200">
       <button
         type="button"
         @click="$emit('close')"
-        class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md transition mr-2"
+        class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md transition mr-3"
       >
         Batal
       </button>
@@ -153,140 +200,267 @@
         :disabled="isSubmitting"
         class="bg-[#007bff] hover:bg-lime-600 text-white px-4 py-2 rounded-md text-sm disabled:opacity-50 transition"
       >
-        {{ isSubmitting ? 'Menyimpan...' : 'Simpan Transaksi' }}
+        {{ isSubmitting ? 'Memproses...' : 'Simpan Transaksi' }}
       </button>
     </div>
   </form>
+
+  <BaseModal :show="showConfirmationModal" title="Konfirmasi Transaksi" @close="closeConfirmationModal" width="max-w-lg">
+    <div v-if="dataForConfirmation" class="space-y-4">
+      <div>
+        <h4 class="font-semibold text-gray-800">Pelanggan:</h4>
+        <p>{{ dataForConfirmation.customerName || 'Tidak ada pelanggan dipilih' }}</p>
+      </div>
+      <div>
+        <h4 class="font-semibold text-gray-800">Detail Item:</h4>
+        <ul v-if="dataForConfirmation.items && dataForConfirmation.items.length > 0" class="list-disc list-inside pl-5 space-y-1 mt-1">
+          <li v-for="(itemConf, idxConf) in dataForConfirmation.items" :key="idxConf">
+            {{ itemConf.name }} ({{ itemConf.quantity }} x Rp {{ itemConf.unitPrice.toLocaleString('id-ID') }}) =
+            <span class="font-semibold">Rp {{ itemConf.subtotal.toLocaleString('id-ID') }}</span>
+          </li>
+        </ul>
+        <p v-else class="text-gray-500">Tidak ada item produk.</p>
+      </div>
+      <hr />
+      <div class="text-right">
+        <p class="text-md font-bold text-gray-800">
+          Total Keseluruhan:
+          <span class="text-emerald-600">Rp {{ dataForConfirmation.grandTotal.toLocaleString('id-ID') }}</span>
+        </p>
+      </div>
+    </div>
+    <template #footer>
+      <button @click="closeConfirmationModal" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md transition mr-2">
+        Batal
+      </button>
+      <button @click="executeSubmit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-md text-sm transition">
+        Konfirmasi & Simpan
+      </button>
+    </template>
+  </BaseModal>
 </template>
 
 <script setup>
-import { ref, watch, nextTick, computed, onBeforeUpdate } from 'vue';
+import { ref, watch, nextTick, computed, onMounted } from 'vue';
 import { getProdukList, getProdukDetail } from '../../services/produkService.js';
-import LoadingCircle from '../atoms/LoadingCircle.vue';
+import { getPelangganList } from '../../services/pelangganService.js';
+import BaseModal from '../atoms/BaseModal.vue';
 
-const props = defineProps({
-  transaction: Object,
-});
+// Props tidak lagi diperlukan karena form hanya untuk tambah baru
+// defineProps({
+//   transaction: Object,
+// });
 
 const emit = defineEmits(['submit', 'close']);
 
 const isSubmitting = ref(false);
-const loadingProducts = ref({});
+const productSearchTimeouts = ref({});
+const customerSearchTimeout = ref(null);
+
+const customerSearchTerm = ref('');
+const customerOptions = ref([]);
+const isCustomerDropdownOpen = ref(false);
+const highlightedCustomerIndex = ref(-1);
+const selectedCustomerName = ref('');
+
+const showConfirmationModal = ref(false);
+const dataForConfirmation = ref(null);
 
 let itemKeyCounter = 0;
-const createNewItem = (productData = null, transactionItemData = null) => {
+const createNewItem = (productData = null) => {
   const newItem = {
     key: itemKeyCounter++,
     product_id: productData ? productData.id : null,
-    quantity: transactionItemData ? transactionItemData.quantity : (productData ? 1 : 1),
-    original_price: productData ? productData.harga_jual : 0,
+    quantity: productData ? 1 : 1,
+    original_unit_price: productData ? productData.harga_jual : 0,
     satuan: productData ? productData.satuan : '',
     max_quantity: productData ? productData.jumlah : Infinity,
-    custom_price_input: null,
-    final_price: productData ? productData.harga_jual : 0,
+    custom_unit_price_input: null,
+    final_unit_price: productData ? productData.harga_jual : 0,
     product_search_term: productData ? productData.nama : '',
     product_options: [],
     is_product_dropdown_open: false,
     highlighted_product_index: -1,
     selected_product_name: productData ? productData.nama : '',
-    custom_price_display_value: '',
-    is_editing_custom_price: false,
+    custom_unit_price_display_value: '',
+    is_editing_custom_unit_price: false,
+    customPriceInputElement: null,
   };
 
   if (productData) {
-    newItem.custom_price_display_value = `Rp ${productData.harga_jual.toLocaleString('id-ID')}`;
-    if (transactionItemData && typeof transactionItemData.harga_jual === 'number' && transactionItemData.harga_jual !== productData.harga_jual) {
-      newItem.custom_price_input = transactionItemData.harga_jual;
-      newItem.final_price = transactionItemData.harga_jual;
-      newItem.custom_price_display_value = `Rp ${transactionItemData.harga_jual.toLocaleString('id-ID')}`;
-    }
-  } else if (transactionItemData && typeof transactionItemData.harga_jual === 'number') {
-    newItem.final_price = transactionItemData.harga_jual;
-    newItem.custom_price_display_value = `Rp ${transactionItemData.harga_jual.toLocaleString('id-ID')} (harga transaksi)`;
-    newItem.selected_product_name = `Produk ID ${transactionItemData.product_id}`;
-    newItem.product_search_term = `Produk ID ${transactionItemData.product_id}`;
+    newItem.custom_unit_price_display_value = `Rp ${productData.harga_jual.toLocaleString('id-ID')}`;
   }
+  // Logika untuk transactionItemData dihilangkan karena tidak ada mode edit
   return newItem;
 };
 
+const resetFormState = () => {
+  form.value.customer_id = null;
+  form.value.user_id = 2; // Atau ambil dari user yang login
+  form.value.items = [createNewItem()];
+  
+  customerSearchTerm.value = '';
+  selectedCustomerName.value = '';
+  customerOptions.value = [];
+  isCustomerDropdownOpen.value = false;
+  highlightedCustomerIndex.value = -1;
+};
 
 const form = ref({
-  customer_id: '',
+  customer_id: null,
   user_id: 2,
   items: [createNewItem()],
 });
 
-const itemRefs = ref([]);
-onBeforeUpdate(() => {
-  // Kosongkan array refs sebelum setiap update agar Vue dapat mengisinya kembali dengan benar
-  // Ini membantu menjaga konsistensi, terutama jika item dihapus.
-  itemRefs.value.forEach(itemRef => {
-    if (itemRef) { // Pastikan itemRef itu sendiri tidak null/undefined
-      itemRef.customPriceInput = null; // Hapus referensi DOM lama
-    }
-  });
-  // Meskipun kita mengosongkan properti di atas, cara yang lebih aman untuk menangani penghapusan item
-  // adalah dengan mengandalkan Vue untuk menghapus elemen ref dari array jika item-nya hilang.
-  // Yang penting adalah inisialisasi objek saat ref function dipanggil.
+onMounted(() => {
+  resetFormState();
 });
 
+// watch untuk props.transaction dihilangkan
 
-const addItem = () => {
-  form.value.items.push(createNewItem());
-  // Tidak perlu secara eksplisit menambahkan ke itemRefs di sini karena
-  // fungsi ref akan dipanggil saat item baru dirender.
+// --- Customer Search Logic ---
+const onCustomerSearch = async (searchTerm) => {
+  customerSearchTerm.value = searchTerm;
+  isCustomerDropdownOpen.value = true;
+  highlightedCustomerIndex.value = -1;
+
+  if (selectedCustomerName.value && searchTerm !== selectedCustomerName.value) {
+    form.value.customer_id = null;
+    selectedCustomerName.value = '';
+  }
+
+  if (customerSearchTimeout.value) clearTimeout(customerSearchTimeout.value);
+
+  if (searchTerm.trim() === '') {
+      customerOptions.value = [];
+      return;
+  }
+
+  customerSearchTimeout.value = setTimeout(async () => {
+    try {
+      const response = await getPelangganList({ search: searchTerm.trim(), page: 1, limit: 10 });
+      if (response.success && response.data && Array.isArray(response.data.data)) {
+        customerOptions.value = response.data.data;
+      } else {
+        customerOptions.value = [];
+      }
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+      customerOptions.value = [];
+    }
+  }, 300);
 };
 
+const selectCustomer = (customer) => {
+  form.value.customer_id = customer.id;
+  selectedCustomerName.value = customer.nama;
+  customerSearchTerm.value = customer.nama;
+  isCustomerDropdownOpen.value = false;
+  customerOptions.value = [];
+  highlightedCustomerIndex.value = -1;
+};
+
+const clearCustomer = () => {
+  form.value.customer_id = null;
+  selectedCustomerName.value = '';
+  customerSearchTerm.value = '';
+  customerOptions.value = [];
+  isCustomerDropdownOpen.value = false;
+  highlightedCustomerIndex.value = -1;
+};
+
+const handleCustomerSearchBlur = () => {
+  setTimeout(() => {
+    isCustomerDropdownOpen.value = false;
+  }, 200);
+};
+
+const highlightNextCustomer = () => {
+    if (customerOptions.value.length === 0) return;
+    highlightedCustomerIndex.value = (highlightedCustomerIndex.value + 1) % customerOptions.value.length;
+};
+const highlightPrevCustomer = () => {
+    if (customerOptions.value.length === 0) return;
+    highlightedCustomerIndex.value = (highlightedCustomerIndex.value - 1 + customerOptions.value.length) % customerOptions.value.length;
+};
+const selectHighlightedCustomer = () => {
+    if (highlightedCustomerIndex.value >= 0 && highlightedCustomerIndex.value < customerOptions.value.length) {
+        selectCustomer(customerOptions.value[highlightedCustomerIndex.value]);
+    } else if (customerSearchTerm.value.trim() !== '' && customerOptions.value.length === 0) {
+        isCustomerDropdownOpen.value = false;
+    }
+};
+
+// --- Product Item Logic ---
+const addItem = () => { form.value.items.push(createNewItem()); };
+
 const removeItem = (index) => {
+  if (productSearchTimeouts.value[index]) {
+    clearTimeout(productSearchTimeouts.value[index]);
+    delete productSearchTimeouts.value[index];
+  }
   if (form.value.items.length > 1) {
     form.value.items.splice(index, 1);
-    // Hapus juga referensi terkait jika ada, atau biarkan Vue menangani saat onBeforeUpdate
-    // Jika menggunakan itemRefs.value[index] = {} pada inisialisasi ref,
-    // mungkin perlu membersihkan itemRefs.value.splice(index, 1) juga
-    // tapi biasanya Vue akan mengelola ref yang tidak lagi ada di DOM.
-    // Untuk amannya, dan karena kita menggunakan `key` pada `v-for`,
-    // `onBeforeUpdate` dan logika inisialisasi di ref function seharusnya cukup.
   } else {
     form.value.items[0] = createNewItem();
-    if(itemRefs.value[0]) itemRefs.value[0] = {}; // Reset juga refnya jika hanya satu item
   }
 };
 
-let productSearchTimeout = null;
 const onProductSearch = (itemIndex, searchTerm) => {
+  // console.log(`[onProductSearch INVOKED] Item Index: ${itemIndex}, Search Term: "${searchTerm}"`);
   const item = form.value.items[itemIndex];
+  if (!item) {
+    // console.error(`[onProductSearch] Item at index ${itemIndex} not found.`);
+    return;
+  }
   item.product_search_term = searchTerm;
   item.is_product_dropdown_open = true;
   item.highlighted_product_index = -1;
 
   if (item.selected_product_name && searchTerm !== item.selected_product_name) {
-    item.product_id = null;
-    item.original_price = 0;
-    item.satuan = '';
-    item.max_quantity = Infinity;
-    item.custom_price_input = null;
-    item.custom_price_display_value = '';
-    item.selected_product_name = '';
-    item.final_price = 0;
+    // console.log(`[onProductSearch] Clearing selected product for item ${itemIndex} due to search term change.`);
+    item.product_id = null; item.original_unit_price = 0; item.satuan = '';
+    item.max_quantity = Infinity; item.custom_unit_price_input = null;
+    if (item.customPriceInputElement) item.customPriceInputElement.value = '';
+    item.custom_unit_price_display_value = ''; item.selected_product_name = '';
+    item.final_unit_price = 0; item.quantity = 1;
   }
 
-  if (productSearchTimeout) clearTimeout(productSearchTimeout);
-  loadingProducts.value[itemIndex] = true;
-  productSearchTimeout = setTimeout(async () => {
+  if (productSearchTimeouts.value[itemIndex]) {
+    clearTimeout(productSearchTimeouts.value[itemIndex]);
+    // console.log(`[onProductSearch] Cleared existing product search timeout for item ${itemIndex}.`);
+  }
+
+  const currentSearchTerm = item.product_search_term.trim();
+  if (currentSearchTerm === '') {
+    // console.log(`[onProductSearch] Search term for item ${itemIndex} is empty. Clearing options and closing dropdown.`);
+    item.product_options = [];
+    item.is_product_dropdown_open = false;
+    return;
+  }
+
+  // console.log(`[onProductSearch] Setting new product search timeout for item ${itemIndex} with term: "${currentSearchTerm}"`);
+  productSearchTimeouts.value[itemIndex] = setTimeout(async () => {
+    // console.log(`[onProductSearch TIMEOUT] API call for item ${itemIndex} with term: "${currentSearchTerm}"`);
     try {
-      if (searchTerm.trim() !== '') {
-        const response = await getProdukList({ search: searchTerm.trim(), page: 1, limit: 10 });
-        item.product_options = response.data && Array.isArray(response.data.data) ? response.data.data : [];
-      } else {
-        item.product_options = [];
+      const response = await getProdukList({ search: currentSearchTerm, page: 1, limit: 10 });
+      // console.log(`[onProductSearch TIMEOUT] API response for item ${itemIndex}:`, response);
+      if (form.value.items[itemIndex]) {
+         form.value.items[itemIndex].product_options = response.data && Array.isArray(response.data.data) ? response.data.data : [];
+         // if (form.value.items[itemIndex].product_options.length === 0) {
+         //    console.log(`[onProductSearch TIMEOUT] No products found from API for item ${itemIndex}.`);
+         // }
       }
     } catch (error) {
-      console.error("Error fetching products for item " + itemIndex + ":", error);
-      item.product_options = [];
+      console.error(`[onProductSearch TIMEOUT] Error fetching products for item ${itemIndex}:`, error);
+      if (form.value.items[itemIndex]) {
+        form.value.items[itemIndex].product_options = [];
+      }
     } finally {
-      loadingProducts.value[itemIndex] = false;
+      // console.log(`[onProductSearch TIMEOUT] Finished for item ${itemIndex}.`);
+      delete productSearchTimeouts.value[itemIndex];
     }
-  }, 500);
+  }, 300);
 };
 
 const handleProductSearchBlur = (itemIndex) => {
@@ -302,174 +476,164 @@ const selectProduct = (itemIndex, product) => {
   item.product_id = product.id;
   item.selected_product_name = product.nama;
   item.product_search_term = product.nama;
-  item.original_price = product.harga_jual;
+  item.original_unit_price = product.harga_jual;
   item.satuan = product.satuan;
   item.max_quantity = product.jumlah;
   item.quantity = 1;
-  item.custom_price_input = null;
-  item.custom_price_display_value = `Rp ${product.harga_jual.toLocaleString('id-ID')}`;
-  item.final_price = product.harga_jual;
+  item.custom_unit_price_input = null;
+  if (item.customPriceInputElement) item.customPriceInputElement.value = '';
+  item.custom_unit_price_display_value = `Rp ${product.harga_jual.toLocaleString('id-ID')}`;
+  item.final_unit_price = product.harga_jual;
   item.is_product_dropdown_open = false;
   item.product_options = [];
   item.highlighted_product_index = -1;
 };
 
-const clearProduct = (itemIndex) => {
+const clearProductSearch = (itemIndex) => {
   const item = form.value.items[itemIndex];
-  Object.assign(item, {
-      ...createNewItem(),
-      key: item.key
-  });
   item.product_search_term = '';
-};
-
-
-const highlightNextProduct = (itemIndex) => {
-  const item = form.value.items[itemIndex];
-  if (item.product_options.length === 0) return;
-  item.highlighted_product_index = (item.highlighted_product_index + 1) % item.product_options.length;
-};
-
-const highlightPrevProduct = (itemIndex) => {
-  const item = form.value.items[itemIndex];
-  if (item.product_options.length === 0) return;
-  item.highlighted_product_index = (item.highlighted_product_index - 1 + item.product_options.length) % item.product_options.length;
-};
-
-const selectHighlightedProduct = (itemIndex) => {
-  const item = form.value.items[itemIndex];
-  if (item.highlighted_product_index >= 0 && item.highlighted_product_index < item.product_options.length) {
-    selectProduct(itemIndex, item.product_options[item.highlighted_product_index]);
+  item.product_options = [];
+  item.is_product_dropdown_open = false;
+  item.highlighted_product_index = -1;
+  if (item.product_id) {
+    item.product_id = null; item.original_unit_price = 0; item.satuan = '';
+    item.max_quantity = Infinity; item.custom_unit_price_input = null;
+    if (item.customPriceInputElement) item.customPriceInputElement.value = '';
+    item.custom_unit_price_display_value = ''; item.selected_product_name = '';
+    item.final_unit_price = 0; item.quantity = 1;
   }
 };
 
+const highlightNextProduct = (itemIndex) => {
+    const item = form.value.items[itemIndex];
+    if (item.product_options.length === 0) return;
+    item.highlighted_product_index = (item.highlighted_product_index + 1) % item.product_options.length;
+};
+const highlightPrevProduct = (itemIndex) => {
+    const item = form.value.items[itemIndex];
+    if (item.product_options.length === 0) return;
+    item.highlighted_product_index = (item.highlighted_product_index - 1 + item.product_options.length) % item.product_options.length;
+};
+const selectHighlightedProduct = (itemIndex) => {
+    const item = form.value.items[itemIndex];
+    if (item.highlighted_product_index >= 0 && item.highlighted_product_index < item.product_options.length) {
+        selectProduct(itemIndex, item.product_options[item.highlighted_product_index]);
+    } else if (item.product_search_term.trim() !== '' && item.product_options.length === 0) {
+        item.is_product_dropdown_open = false;
+    }
+};
+
+// --- Custom Price Logic ---
 const onFocusCustomPrice = (itemIndex) => {
   const item = form.value.items[itemIndex];
-  item.is_editing_custom_price = true;
-  if (item.custom_price_input === null || item.custom_price_input === undefined) {
-      item.custom_price_input = '';
+  if (!item) return;
+  item.is_editing_custom_unit_price = true;
+  if (item.custom_unit_price_input === null || item.custom_unit_price_input === undefined) {
+      item.custom_unit_price_input = '';
   }
 };
 
 const focusCustomPriceInput = async (itemIndex) => {
   const item = form.value.items[itemIndex];
+  if (!item) return;
   onFocusCustomPrice(itemIndex);
-
   await nextTick();
-  // Pastikan itemRefs.value[index] dan itemRefs.value[index].customPriceInput ada
-  if (itemRefs.value[index] && itemRefs.value[index].customPriceInput) {
-    itemRefs.value[index].customPriceInput.focus();
-    if (itemRefs.value[index].customPriceInput.value) {
-        itemRefs.value[index].customPriceInput.select();
+  if (item.customPriceInputElement) {
+    item.customPriceInputElement.focus();
+    if (typeof item.customPriceInputElement.select === 'function' && item.customPriceInputElement.value && item.customPriceInputElement.value !== '') {
+        item.customPriceInputElement.select();
     }
   }
 };
 
 const formatCustomPriceDisplay = (itemIndex) => {
   const item = form.value.items[itemIndex];
-  item.is_editing_custom_price = false;
-  if (item.custom_price_input !== null && item.custom_price_input !== '' && !isNaN(Number(item.custom_price_input)) && Number(item.custom_price_input) >= 0) {
-    item.custom_price_display_value = `Rp ${Number(item.custom_price_input).toLocaleString('id-ID')}`;
-    item.final_price = Number(item.custom_price_input);
+  if (!item) return;
+  item.is_editing_custom_unit_price = false;
+  if (item.custom_unit_price_input !== null && item.custom_unit_price_input !== '' && !isNaN(Number(item.custom_unit_price_input)) && Number(item.custom_unit_price_input) >= 0) {
+    item.custom_unit_price_display_value = `Rp ${Number(item.custom_unit_price_input).toLocaleString('id-ID')}`;
+    item.final_unit_price = Number(item.custom_unit_price_input);
   } else {
-    item.custom_price_display_value = typeof item.original_price === 'number' ? `Rp ${item.original_price.toLocaleString('id-ID')}` : 'Rp 0';
-    item.final_price = item.original_price || 0;
-    item.custom_price_input = null;
+    item.custom_unit_price_display_value = typeof item.original_unit_price === 'number' ? `Rp ${item.original_unit_price.toLocaleString('id-ID')}` : 'Rp 0';
+    item.final_unit_price = item.original_unit_price || 0;
+    item.custom_unit_price_input = null;
+    if (item.customPriceInputElement) item.customPriceInputElement.value = '';
   }
 };
 
-const updateCustomPriceDisplayOnInput = (itemIndex) => { /* Handled by v-model */ };
+const updateCustomPriceDisplayOnInput = () => { /* v-model handles */ };
 
 const validateQuantity = (itemIndex) => {
     const item = form.value.items[itemIndex];
     if (!item.product_id) return;
-
     if (item.quantity > item.max_quantity) {
         item.quantity = item.max_quantity;
         alert(`Stok produk ${item.selected_product_name || 'yang dipilih'} hanya tersisa ${item.max_quantity}.`);
     }
-    if (item.quantity < 1) {
+    if (item.quantity < 1 && item.product_id) {
         item.quantity = 1;
     }
 };
 
-watch(() => props.transaction, async (newVal) => {
-  if (newVal && newVal.id) {
-    isSubmitting.value = true;
-    form.value.customer_id = newVal.customer_id || '';
-    form.value.user_id = newVal.user_id || 2;
-
-    if (newVal.items && newVal.items.length > 0) {
-      const mappedItems = await Promise.all(newVal.items.map(async (txItem) => {
-        try {
-          const productDetailResponse = await getProdukDetail(txItem.product_id);
-          if (productDetailResponse.success && productDetailResponse.data) {
-            const productDetails = productDetailResponse.data;
-            return createNewItem(productDetails, txItem);
-          } else {
-            console.warn(`Gagal mendapatkan detail untuk produk ID: ${txItem.product_id}. Response:`, productDetailResponse);
-            const fallbackProductData = { id: txItem.product_id, nama: `Produk ID ${txItem.product_id} (Detail Gagal Dimuat)`, harga_jual: txItem.harga_jual, jumlah: txItem.quantity, satuan: '?' };
-            return createNewItem(fallbackProductData, txItem);
-          }
-        } catch (error) {
-          console.error(`Error fetching product details for ID ${txItem.product_id} during edit:`, error);
-          const errorFallbackProductData = { id: txItem.product_id, nama: `Produk ID ${txItem.product_id} (Error Fetch Detail)`, harga_jual: txItem.harga_jual, jumlah: txItem.quantity, satuan: '?' };
-          return createNewItem(errorFallbackProductData, txItem);
-        }
-      }));
-      form.value.items = mappedItems.filter(item => item.product_id);
-      if(form.value.items.length === 0) form.value.items = [createNewItem()];
-    } else {
-      form.value.items = [createNewItem()];
-    }
-    isSubmitting.value = false;
-  } else {
-    form.value.customer_id = '';
-    form.value.user_id = 2;
-    form.value.items = [createNewItem()];
-  }
-}, { immediate: true, deep: true });
-
 
 const totalEstimatedPrice = computed(() => {
     return form.value.items.reduce((total, item) => {
-        const price = item.final_price || 0;
+        const price = item.final_unit_price || 0;
         const quantity = Number(item.quantity) || 0;
         return total + (price * quantity);
     },0);
 });
 
-const onSubmit = () => {
-  isSubmitting.value = true;
-
+// --- Submission Logic with Confirmation Modal ---
+const prepareAndShowConfirmation = () => {
   if (!form.value.customer_id) {
-    alert('Mohon masukkan ID Customer.');
-    isSubmitting.value = false;
+    alert('Mohon pilih pelanggan.');
     return;
   }
+  const validItems = form.value.items.filter(
+    (item) => item.product_id && Number(item.quantity) > 0
+  );
+  if (validItems.length === 0) {
+    alert('Mohon tambahkan setidaknya satu produk yang valid dengan jumlah lebih dari 0.');
+    return;
+  }
+  for (const item of validItems) {
+      if (item.quantity > item.max_quantity) {
+          alert(`Jumlah produk "${item.selected_product_name || 'ID ' + item.product_id}" (${item.quantity}) melebihi stok (${item.max_quantity}).`);
+          return;
+      }
+  }
+
+  dataForConfirmation.value = {
+    customerName: selectedCustomerName.value || `ID Pelanggan: ${form.value.customer_id}`,
+    items: validItems.map(item => ({
+      name: item.selected_product_name,
+      quantity: item.quantity,
+      unitPrice: item.final_unit_price,
+      subtotal: item.quantity * item.final_unit_price,
+    })),
+    grandTotal: totalEstimatedPrice.value,
+  };
+  showConfirmationModal.value = true;
+};
+
+const closeConfirmationModal = () => {
+  showConfirmationModal.value = false;
+  dataForConfirmation.value = null;
+};
+
+const executeSubmit = () => {
+  isSubmitting.value = true;
+  closeConfirmationModal();
 
   const validItems = form.value.items.filter(
     (item) => item.product_id && Number(item.quantity) > 0
   );
 
-  if (validItems.length === 0) {
-    alert('Mohon tambahkan setidaknya satu produk yang valid dengan jumlah lebih dari 0.');
-    isSubmitting.value = false;
-    return;
-  }
-
-  for (const item of validItems) {
-      if (item.quantity > item.max_quantity) {
-          alert(`Jumlah produk "${item.selected_product_name || 'ID ' + item.product_id}" (${item.quantity}) melebihi stok (${item.max_quantity}).`);
-          isSubmitting.value = false;
-          return;
-      }
-  }
-
   const payloadItems = validItems.map(item => ({
     product_id: item.product_id,
     quantity: Number(item.quantity),
-    harga_jual: item.final_price,
+    harga_satuan: item.final_unit_price,
   }));
 
   const payload = {
@@ -478,16 +642,18 @@ const onSubmit = () => {
     items: payloadItems,
   };
 
-  console.log('Submitting transaction payload:', JSON.stringify(payload, null, 2));
-
   emit('submit', payload, () => {
     isSubmitting.value = false;
   });
 };
+
+const onSubmit = prepareAndShowConfirmation;
+
 </script>
 
 <style scoped>
 .opacity-0 { opacity: 0; }
 .w-0 { width: 0; }
 .h-0 { height: 0; }
+.select-none { user-select: none; }
 </style>

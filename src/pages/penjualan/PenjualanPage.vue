@@ -1,10 +1,9 @@
-<!-- src\pages\penjualan\PenjualanPage.vue -->
 <template>
   <div class="px-4 py-6 w-full mx-auto">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-semibold">Data Transaksi</h1>
       <button
-        @click="openModal()"
+        @click="openFormModal()"
         class="bg-[#007bff] hover:bg-lime-600 text-white px-4 py-2 rounded-md text-sm transition"
       >
         + Tambah Transaksi
@@ -16,11 +15,10 @@
         v-model="search"
         @input="onSearchInput"
         type="text"
-        placeholder="Cari transaksi..."
+        placeholder="Cari transaksi (ID Nota, ID Pelanggan)..."
         class="flex-grow px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
         style="height: 38px"
       />
-
       <div class="flex items-center space-x-2">
         <label for="limit" class="text-sm text-gray-700 select-none">Tampilkan</label>
         <select
@@ -40,21 +38,20 @@
 
     <div class="relative min-h-[200px]">
       <LoadingCircle v-if="loading" />
-
       <BaseTable :columns="columns" :rows="rows" class="overflow-x-auto">
         <template #actions="{ row }">
           <button
-            @click="openModal(row)"
-            class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-md text-sm mr-3 transition"
+            @click="openDetailModal(row.id)"
+            class="bg-sky-500 hover:bg-sky-600 text-white px-3 py-1 rounded-md text-sm mr-2 transition"
           >
-            Edit
+            Detail
           </button>
-          <button
-            @click="deleteTransaction(row.id)"
-            class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm transition"
-          >
-            Hapus
-          </button>
+          </template>
+        <template #items_summary="{ row }">
+            <span v-if="row.items && row.items.length > 0" class="text-xs">
+                {{ row.items.length }} jenis produk, Total Qty: {{ totalQuantity(row.items) }}
+            </span>
+            <span v-else class="text-xs text-gray-500">-</span>
         </template>
       </BaseTable>
     </div>
@@ -63,105 +60,236 @@
       <BasePagination :currentPage="page" :totalPages="totalPages" @change="changePage" />
     </div>
 
-    <BaseModal :show="showModal" title="Form Transaksi" @close="closeModal">
-      <TransactionForm :transaction="selectedTransaction" @submit="handleSubmit" />
+    <BaseModal :show="showFormModal" title="Tambah Transaksi" @close="closeFormModal" width="max-w-3xl">
+      <TransactionForm
+        @submit="handleSubmit"
+        @close="closeFormModal"
+      />
+      </BaseModal>
+
+    <BaseModal :show="showDetailModal" title="Detail Transaksi" @close="closeDetailModal" width="max-w-2xl">
+        <div v-if="loadingDetail" class="flex justify-center items-center min-h-[200px]">
+            <LoadingCircle />
+        </div>
+        <div v-else-if="selectedTransactionDetail" class="space-y-4">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">Informasi Umum</h3>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    <p><strong class="text-gray-600">ID Nota:</strong> {{ selectedTransactionDetail.transaction_code }}</p>
+                    <p><strong class="text-gray-600">Tanggal:</strong> {{ formatDate(selectedTransactionDetail.created_at) }}</p>
+                    <p><strong class="text-gray-600">Pelanggan ID:</strong> {{ selectedTransactionDetail.customer_id }} </p>
+                    <p><strong class="text-gray-600">Kasir ID:</strong> {{ selectedTransactionDetail.user_id }} </p>
+                    <p class="col-span-2"><strong class="text-gray-600">Total Harga:</strong> <span class="font-bold text-emerald-600">Rp {{ (selectedTransactionDetail.total_harga || 0).toLocaleString('id-ID') }}</span></p>
+                </div>
+            </div>
+            <hr/>
+            <div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">Item Produk</h3>
+                <div class="max-h-60 overflow-y-auto pr-2">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-3 py-2 text-left font-medium text-gray-500 tracking-wider">Produk</th>
+                                <th class="px-3 py-2 text-left font-medium text-gray-500 tracking-wider">Kode</th>
+                                <th class="px-3 py-2 text-right font-medium text-gray-500 tracking-wider">Qty</th>
+                                <th class="px-3 py-2 text-right font-medium text-gray-500 tracking-wider">Harga Satuan</th>
+                                <th class="px-3 py-2 text-right font-medium text-gray-500 tracking-wider">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr v-if="!selectedTransactionDetail.items || selectedTransactionDetail.items.length === 0">
+                                <td colspan="5" class="px-3 py-3 text-center text-gray-500">Tidak ada item.</td>
+                            </tr>
+                            <tr v-for="item in selectedTransactionDetail.items" :key="item.id">
+                                <td class="px-3 py-2 whitespace-nowrap">{{ item.product_name }}</td>
+                                <td class="px-3 py-2 whitespace-nowrap">{{ item.kode_barang }}</td>
+                                <td class="px-3 py-2 text-right whitespace-nowrap">{{ item.quantity }}</td>
+                                <td class="px-3 py-2 text-right whitespace-nowrap">Rp {{ (item.harga_satuan || 0).toLocaleString('id-ID') }}</td>
+                                <td class="px-3 py-2 text-right whitespace-nowrap">Rp {{ (item.subtotal || 0).toLocaleString('id-ID') }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div v-else>
+            <p class="text-center text-gray-500 py-10">Data detail transaksi tidak ditemukan atau gagal dimuat.</p>
+        </div>
+        <template #footer>
+            <button @click="closeDetailModal" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm transition">
+                Tutup
+            </button>
+        </template>
     </BaseModal>
+
   </div>
 </template>
 
 <script setup>
-  import { ref, onMounted } from 'vue';
-  import BaseTable from '../../components/atoms/BaseTable.vue';
-  import BaseModal from '../../components/atoms/BaseModal.vue';
-  import BasePagination from '../../components/atoms/BasePagination.vue';
-  import TransactionForm from '../../components/transaction/TransactionForm.vue'; // Ensure this component exists
-  import {
-    getTransactionList,
-    createTransaction,
-    updateTransaction,
-    deleteTransactionData,
-  } from '../../services/transactionService.js'; // Ensure service is correct
-  import LoadingCircle from '../../components/atoms/LoadingCircle.vue';
+import { ref, onMounted, computed } from 'vue';
+import BaseTable from '../../components/atoms/BaseTable.vue';
+import BaseModal from '../../components/atoms/BaseModal.vue';
+import BasePagination from '../../components/atoms/BasePagination.vue';
+import TransactionForm from '../../components/transaction/TransactionForm.vue';
+import {
+  getTransactionList,
+  createTransaction,
+  // updateTransaction, // Dihilangkan
+  // deleteTransactionData, // Dihilangkan
+  getTransactionDetail,
+} from '../../services/transactionService.js';
+import LoadingCircle from '../../components/atoms/LoadingCircle.vue';
 
-  const columns = [
-    { label: 'Pelanggan', key: 'customer_name' },
-    { label: 'User', key: 'user_name' },
-    { label: 'ID Nota', key: 'transaction_code' },
-    { label: 'Total Harga', key: 'total_harga' },
-    { label: 'Tanggal Dibuat', key: 'created_at' },
-    { label: 'Terakhir Update', key: 'updated_at' },
-  ];
+const columns = [
+  { label: 'ID Nota', key: 'transaction_code', class: 'w-1/6 whitespace-nowrap' },
+  { label: 'Pelanggan', key: 'customer_name', class: 'w-1/6' }, // Atau customer_id jika nama tidak tersedia di list
+  { label: 'Kasir', key: 'user_name', class: 'w-1/12' },       // Atau user_id
+  { label: 'Ringkasan Item', key: 'items_summary', slot: true, class: 'w-2/6' },
+  { label: 'Total Harga', key: 'total_harga', type: 'currency', class: 'w-1/6 text-right whitespace-nowrap' },
+  { label: 'Tanggal', key: 'created_at', type: 'date', class: 'whitespace-nowrap' },
+];
 
-  const rows = ref([]);
-  const search = ref('');
-  const page = ref(1);
-  const limit = ref(10);
-  const totalPages = ref(1);
-  const showModal = ref(false);
-  const selectedTransaction = ref(null);
-  const loading = ref(false);
+const rows = ref([]);
+const search = ref('');
+const page = ref(1);
+const limit = ref(10);
+const totalPages = ref(1);
+const loading = ref(false);
 
-  const fetchData = async () => {
-    loading.value = true;
-    try {
-      const response = await getTransactionList({
-        search: search.value,
-        page: page.value,
-        limit: limit.value,
-      });
-      rows.value = response.data.data;
+// State untuk modal form (hanya untuk tambah)
+const showFormModal = ref(false);
+// selectedTransactionForForm tidak lagi diperlukan untuk mode edit
+// const selectedTransactionForForm = ref(null); // Dihilangkan
 
-      const filteredCount = Number(
-        response.data.filtered || response.data.total || rows.value.length
-      );
+// State untuk modal detail
+const showDetailModal = ref(false);
+const selectedTransactionDetail = ref(null);
+const loadingDetail = ref(false);
+
+const formatDate = (dateString) => {
+  if (!dateString) return '-';
+  const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' };
+  return new Date(dateString).toLocaleDateString('id-ID', options);
+};
+
+const totalQuantity = (items) => {
+    if (!items) return 0;
+    return items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+};
+
+const fetchData = async () => {
+  loading.value = true;
+  try {
+    const response = await getTransactionList({
+      search: search.value,
+      page: page.value,
+      limit: limit.value,
+    });
+    if (response.success && response.data) {
+      rows.value = response.data.data.map(tx => ({
+        ...tx,
+        // customer_name: tx.customer?.nama || tx.customer_id, // Contoh jika ada relasi
+        // user_name: tx.user?.nama || tx.user_id,             // Contoh jika ada relasi
+      }));
+      const filteredCount = Number(response.data.filtered || response.data.total || rows.value.length);
       totalPages.value = Math.max(1, Math.ceil(filteredCount / limit.value));
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  const openModal = (transaction = null) => {
-    selectedTransaction.value = transaction;
-    showModal.value = true;
-  };
-
-  const closeModal = () => {
-    showModal.value = false;
-    selectedTransaction.value = null;
-  };
-
-  const handleSubmit = async (formData) => {
-    if (selectedTransaction.value) {
-      await updateTransaction(selectedTransaction.value.id, formData);
     } else {
-      await createTransaction(formData);
+      rows.value = [];
+      totalPages.value = 1;
     }
-    closeModal();
-    fetchData();
-  };
+  } catch (error) {
+    console.error("Error saat mengambil data transaksi:", error);
+    rows.value = [];
+    totalPages.value = 1;
+  } finally {
+    loading.value = false;
+  }
+};
 
-  const deleteTransaction = async (id) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus data transaksi ini?')) {
-      loading.value = true;
-      await deleteTransactionData(id);
-      fetchData();
+// Fungsi untuk modal form (hanya tambah)
+const openFormModal = () => {
+  // selectedTransactionForForm.value = null; // Tidak perlu lagi karena hanya untuk tambah
+  showFormModal.value = true;
+};
+
+const closeFormModal = () => {
+  showFormModal.value = false;
+};
+
+const handleSubmit = async (formDataFromForm) => {
+  const payload = {
+    ...formDataFromForm,
+    items: formDataFromForm.items.map(item => ({
+      product_id: item.product_id,
+      quantity: item.quantity,
+      // harga_satuan (dari form) tidak dikirim ke API create transaksi sesuai contoh curl awal
+    })),
+  };
+  
+  // Tidak ada lagi loading.value = true di sini karena isSubmitting di form menangani tombolnya
+  // Dan PenjualanPage akan re-fetch data setelah modal ditutup
+  try {
+    // Hanya ada createTransaction karena fitur edit dihilangkan
+    const response = await createTransaction(payload);
+    if (!response.success) {
+      throw new Error(response.message || 'Gagal membuat transaksi.');
     }
-  };
+    console.log('Transaksi berhasil dibuat:', response);
+    // Tambahkan notifikasi sukses di sini jika perlu
+    closeFormModal();
+    fetchData(); 
+  } catch (error) {
+    console.error("Error saat membuat transaksi:", error);
+    alert(`Gagal membuat transaksi: ${error.message}`);
+  }
+};
 
-  const changePage = (newPage) => {
+// Fungsi untuk modal detail
+const openDetailModal = async (transactionId) => {
+    loadingDetail.value = true;
+    showDetailModal.value = true;
+    selectedTransactionDetail.value = null;
+    try {
+        const response = await getTransactionDetail(transactionId);
+        if (response.success && response.data) {
+            selectedTransactionDetail.value = response.data;
+        } else {
+            selectedTransactionDetail.value = { error: response.message || "Data tidak ditemukan." };
+        }
+    } catch (error) {
+        selectedTransactionDetail.value = { error: error.message || "Terjadi kesalahan." };
+    } finally {
+        loadingDetail.value = false;
+    }
+};
+
+const closeDetailModal = () => {
+    showDetailModal.value = false;
+    selectedTransactionDetail.value = null;
+};
+
+// Fungsi hapus dan konfirmasi hapus dihilangkan
+
+const changePage = (newPage) => {
+  if (newPage >= 1 && newPage <= totalPages.value) {
     page.value = newPage;
     fetchData();
-  };
+  }
+};
 
-  const onLimitChange = () => {
+const onLimitChange = () => {
+  page.value = 1;
+  fetchData();
+};
+
+let searchTimeout = null;
+const onSearchInput = () => {
+  if (searchTimeout) clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
     page.value = 1;
     fetchData();
-  };
+  }, 500);
+};
 
-  const onSearchInput = () => {
-    page.value = 1;
-    fetchData();
-  };
-
-  onMounted(fetchData);
+onMounted(fetchData);
 </script>
