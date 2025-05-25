@@ -26,7 +26,7 @@
 
     try {
       const response = await fetch(
-        'https://robert-praise-calculate-singer.trycloudflare.com/api/user/login',
+        'http://localhost:3000/api/user/login',
         {
           method: 'POST',
           headers: {
@@ -94,9 +94,7 @@
               placeholder="Kata Sandi"
               class="w-full px-5 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-lime-400"
             />
-            <div class="text-sm text-lime-600 text-right mt-1 cursor-pointer hover:underline">
-              Lupa kata sandi?
-            </div>
+      
           </div>
 
           <button
@@ -108,15 +106,6 @@
           </button>
         </form>
 
-        <p class="text-sm text-center mt-4 text-gray-700">
-          Belum punya akun?
-          <span
-            @click="router.push('/register')"
-            class="text-lime-700 font-bold cursor-pointer hover:underline"
-          >
-            Daftar akun
-          </span>
-        </p>
       </div>
     </div>
   </div>

@@ -1,24 +1,58 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-// Komponen SummaryBox mungkin tidak lagi relevan untuk layout baru yang lebih kompleks,
-// tapi bisa Anda gunakan kembali atau modifikasi jika ada bagian yang cocok.
-// import SummaryBox from '../components/atoms/SummaryBox.vue';
+import { ref, computed } from 'vue';
+// 1. Impor komponen chart dari vue-chartjs
+import { Bar, Line } from 'vue-chartjs';
+// 2. Impor elemen-elemen yang diperlukan dari chart.js
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+} from 'chart.js';
 
-const pageTitle = ref('Dashboard Analitik');
-const selectedTimeframe = ref('Harian'); // Untuk filter Harian/Mingguan/Bulanan
+// 3. Daftarkan elemen-elemen Chart.js
+ChartJS.register(
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement
+);
 
-// Placeholder Data (gantilah dengan data dari API Anda)
+const pageTitle = ref('Dashboard');
+const selectedTimeframe = ref('Harian');
+
+// --- Placeholder Data ---
 const totalPenjualan = ref({
-  angka: 'Rp 1.250.000',
+  angka: 'Rp 1.250.000', // Ini harusnya diupdate juga nanti dari API
   trenLabel: '+15% vs kemarin',
 });
 
-const metodePembayaranData = ref([
-  { metode: 'Transfer Bank', jumlah: 120 },
-  { metode: 'E-Wallet', jumlah: 80 },
-  { metode: 'COD', jumlah: 50 },
-]);
+// --- Data untuk Line Chart (Harian, Mingguan, Bulanan) ---
+const penjualanHarian = ref({
+  labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
+  data: [500000, 650000, 720000, 680000, 900000, 1100000, 1250000],
+});
 
+const penjualanMingguan = ref({
+  labels: ['Minggu 49', 'Minggu 50', 'Minggu 51', 'Minggu 52'], // Contoh: 4 Minggu Terakhir
+  data: [3500000, 4200000, 3800000, 5000000],
+});
+
+const penjualanBulanan = ref({
+  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'], // Contoh: 6 Bulan Terakhir
+  data: [15000000, 17500000, 16000000, 18200000, 20000000, 19500000],
+});
+
+// --- Data Lainnya ---
 const produkTerlarisKuantitas = ref([
   { id: 1, nama: 'Bayam Merah Super', kuantitas: 150, satuan: 'ikat' },
   { id: 2, nama: 'Kangkung Hidroponik', kuantitas: 120, satuan: 'ikat' },
@@ -69,7 +103,7 @@ const topPelangganTransaksi = ref([
     { id: 5, nama: 'Warung Makan Sederhana', jumlahTransaksi: 12 },
 ]);
 
-// Fungsi untuk memformat angka (opsional, sesuaikan dengan kebutuhan)
+// Fungsi untuk memformat angka
 const formatAngka = (value) => {
   if (typeof value === 'number') {
     return value.toLocaleString('id-ID');
@@ -77,27 +111,165 @@ const formatAngka = (value) => {
   return value;
 };
 
-// TODO: Buat fungsi untuk fetch data dinamis di onMounted atau saat timeframe berubah
-// onMounted(() => {
-//   fetchDashboardData(selectedTimeframe.value);
-// });
+// Fungsi untuk mengubah string Rupiah menjadi angka
+const parseRupiah = (rpString) => parseInt(rpString.replace(/[^0-9]/g, ''), 10);
 
-// const fetchDashboardData = async (timeframe) => {
-//   console.log(`Workspaceing data for: ${timeframe}`);
-//   // Panggil API Anda di sini
-// };
+// --- 4. Siapkan Data & Opsi untuk Chart ---
+
+// Line Chart Dinamis
+const lineChartData = computed(() => {
+  let currentDataRef;
+
+  switch (selectedTimeframe.value) {
+    case 'Mingguan':
+      currentDataRef = penjualanMingguan.value;
+      break;
+    case 'Bulanan':
+      currentDataRef = penjualanBulanan.value;
+      break;
+    case 'Harian':
+    default:
+      currentDataRef = penjualanHarian.value;
+      break;
+  }
+
+  return {
+    labels: currentDataRef.labels,
+    datasets: [{
+      label: `Penjualan (${selectedTimeframe.value})`,
+      backgroundColor: 'rgba(16, 185, 129, 0.2)',
+      borderColor: '#059669',
+      data: currentDataRef.data,
+      fill: true,
+      tension: 0.3,
+    }],
+  };
+});
+
+// Bar Chart - Produk Kuantitas
+const produkKuantitasData = computed(() => ({
+  labels: produkTerlarisKuantitas.value.map(p => p.nama),
+  datasets: [{
+    label: 'Kuantitas Terjual',
+    backgroundColor: '#3B82F6',
+    data: produkTerlarisKuantitas.value.map(p => p.kuantitas),
+  }],
+}));
+
+// Bar Chart - Produk Rupiah
+const produkRupiahData = computed(() => ({
+  labels: produkTerlarisRupiah.value.map(p => p.nama),
+  datasets: [{
+    label: 'Nilai Penjualan (Rp)',
+    backgroundColor: '#14B8A6',
+    data: produkTerlarisRupiah.value.map(p => parseRupiah(p.nilai)),
+  }],
+}));
+
+// Bar Chart - Stok Terbanyak
+const stokTerbanyakData = computed(() => ({
+  labels: stokTerbanyak.value.map(s => s.nama),
+  datasets: [{
+    label: 'Jumlah Stok',
+    backgroundColor: ['#F59E0B', '#10B981', '#6366F1'],
+    data: stokTerbanyak.value.map(s => s.jumlah),
+  }],
+}));
+
+// Bar Chart - Pelanggan Nilai
+const pelangganNilaiData = computed(() => ({
+    labels: topPelangganNilai.value.map(c => c.nama),
+    datasets: [{
+        label: 'Total Pembelian (Rp)',
+        backgroundColor: '#8B5CF6',
+        data: topPelangganNilai.value.map(c => parseRupiah(c.totalBeli)),
+    }],
+}));
+
+// Bar Chart - Pelanggan Transaksi
+const pelangganTransaksiData = computed(() => ({
+    labels: topPelangganTransaksi.value.map(c => c.nama),
+    datasets: [{
+        label: 'Jumlah Transaksi',
+        backgroundColor: '#EC4899',
+        data: topPelangganTransaksi.value.map(c => c.jumlahTransaksi),
+    }],
+}));
+
+// --- Opsi Chart ---
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+  },
+};
+
+const horizontalBarOptions = {
+  ...chartOptions,
+  indexAxis: 'y',
+  scales: { x: { beginAtZero: true } },
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+        callbacks: {
+            label: function(context) {
+                let label = context.dataset.label || '';
+                if (label) label += ': ';
+                if (context.parsed.x !== null) {
+                    label += context.dataset.label.includes('(Rp)')
+                        ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(context.parsed.x)
+                        : context.parsed.x;
+                }
+                return label;
+            }
+        }
+    }
+  }
+};
+
+const verticalBarOptions = {
+  ...chartOptions,
+  scales: { y: { beginAtZero: true } },
+};
+
+const lineChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: true, position: 'top' },
+  },
+  scales: {
+    y: {
+      beginAtZero: true,
+      ticks: {
+        callback: function(value) {
+          return 'Rp ' + value.toLocaleString('id-ID');
+        }
+      }
+    }
+  }
+};
+
+// --- Fungsi ---
+const fetchDashboardData = async (timeframe) => {
+  console.log(`TODO: Memuat data untuk: ${timeframe}`);
+  // Panggil API Anda di sini untuk memperbarui semua 'ref' data.
+  // Pastikan API mengembalikan data dalam format yang sesuai
+  // atau transformasikan data tersebut agar cocok dengan 'ref'
+  // (penjualanHarian, penjualanMingguan, penjualanBulanan, dll).
+};
 
 const setTimeframe = (timeframe) => {
-    selectedTimeframe.value = timeframe;
-    // fetchDashboardData(timeframe); // Panggil API dengan timeframe baru
+  selectedTimeframe.value = timeframe;
+  fetchDashboardData(timeframe); // Panggil API saat timeframe berubah
 }
-
 </script>
 
 <template>
   <div class="flex h-screen bg-gray-100">
     <div class="flex flex-col flex-1 overflow-hidden">
-      <main class="flex-1 overflow-y-auto p-6">
+      <main class="flex-1 overflow-y-auto p-6 pb-20"> 
         <div class="flex justify-between items-center mb-6">
             <div class="text-2xl font-bold text-gray-800">{{ pageTitle }}</div>
             <div class="flex items-center gap-2">
@@ -109,29 +281,21 @@ const setTimeframe = (timeframe) => {
         </div>
 
         <section class="mb-8">
-          <h2 class="text-xl font-semibold text-gray-700 mb-4">Ringkasan Penjualan dan Keuangan</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-            <div class="bg-white p-6 rounded-lg shadow-md">
-              <h3 class="text-lg font-semibold text-gray-600 mb-1">Total Penjualan ({{ selectedTimeframe }})</h3>
-              <p class="text-4xl font-bold text-emerald-500 mb-1">{{ totalPenjualan.angka }}</p>
-              <p class="text-xs text-gray-500">{{ totalPenjualan.trenLabel }}</p>
-              <div class="mt-4 h-40 bg-gray-200 flex items-center justify-center rounded text-gray-500">
-                Placeholder: Line Chart Tren Penjualan
-              </div>
-            </div>
-            <div class="bg-white p-6 rounded-lg shadow-md md:col-span-1 lg:col-span-2">
-              <h3 class="text-lg font-semibold text-gray-600 mb-3">Metode Pembayaran ({{ selectedTimeframe }})</h3>
-              <div class="h-48 bg-gray-200 flex items-center justify-center rounded text-gray-500">
-                Placeholder: Pie Chart / Bar Chart Metode Pembayaran
-              </div>
+          <h2 class="text-xl font-semibold text-gray-700 mb-4">Ringkasan Penjualan</h2>
+          <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <h3 class="text-lg font-semibold text-gray-600 mb-1">Total Penjualan ({{ selectedTimeframe }})</h3>
+            <p class="text-4xl font-bold text-emerald-500 mb-1">{{ totalPenjualan.angka }}</p>
+            <p class="text-xs text-gray-500">{{ totalPenjualan.trenLabel }}</p>
+            <div class="mt-4 h-64">
+              <Line :data="lineChartData" :options="lineChartOptions" />
             </div>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div class="bg-white p-6 rounded-lg shadow-md">
               <h3 class="text-lg font-semibold text-gray-600 mb-3">Produk Terlaris (Kuantitas - {{ selectedTimeframe }})</h3>
-              <div class="h-40 bg-gray-200 flex items-center justify-center rounded text-gray-500 mb-3">
-                Placeholder: Horizontal Bar Chart
+              <div class="h-64 mb-3">
+                <Bar :data="produkKuantitasData" :options="horizontalBarOptions" />
               </div>
               <table class="w-full text-sm text-left text-gray-500">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50">
@@ -146,8 +310,8 @@ const setTimeframe = (timeframe) => {
             </div>
             <div class="bg-white p-6 rounded-lg shadow-md">
               <h3 class="text-lg font-semibold text-gray-600 mb-3">Produk Terlaris (Rupiah - {{ selectedTimeframe }})</h3>
-              <div class="h-40 bg-gray-200 flex items-center justify-center rounded text-gray-500 mb-3">
-                Placeholder: Horizontal Bar Chart
+              <div class="h-64 mb-3">
+                <Bar :data="produkRupiahData" :options="horizontalBarOptions" />
               </div>
               <table class="w-full text-sm text-left text-gray-500">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50">
@@ -179,7 +343,7 @@ const setTimeframe = (timeframe) => {
                     <td class="py-2 px-3 text-right">{{ formatAngka(prod.sisaStok) }}</td>
                     <td class="py-2 px-3 text-right">{{ formatAngka(prod.terjualBulanIni) }}</td>
                   </tr>
-                   <tr v-if="produkKurangLaris.length === 0"><td colspan="3" class="text-center py-3">Tidak ada data.</td></tr>
+                    <tr v-if="produkKurangLaris.length === 0"><td colspan="3" class="text-center py-3">Tidak ada data.</td></tr>
                 </tbody>
               </table>
             </div>
@@ -191,8 +355,8 @@ const setTimeframe = (timeframe) => {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-white p-6 rounded-lg shadow-md">
               <h3 class="text-lg font-semibold text-gray-600 mb-3">Stok Sayuran Terbanyak Saat Ini</h3>
-               <div class="h-48 bg-gray-200 flex items-center justify-center rounded text-gray-500 mb-3">
-                Placeholder: Bar Chart Stok
+                <div class="h-64 mb-3">
+                 <Bar :data="stokTerbanyakData" :options="verticalBarOptions" />
               </div>
               <table class="w-full text-sm text-left text-gray-500">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50">
@@ -232,12 +396,12 @@ const setTimeframe = (timeframe) => {
         </section>
 
         <section>
-          <h2 class="text-xl font-semibold text-gray-700 mb-4">Analisis Pesanan dan Pelanggan</h2>
-           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <h2 class="text-xl font-semibold text-gray-700 mb-4">Dashboard Pesanan dan Pelanggan</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-white p-6 rounded-lg shadow-md">
               <h3 class="text-lg font-semibold text-gray-600 mb-3">Top 5 Pelanggan (Nilai Pembelian - {{selectedTimeframe}})</h3>
-               <div class="h-48 bg-gray-200 flex items-center justify-center rounded text-gray-500 mb-3">
-                Placeholder: Horizontal Bar Chart
+                <div class="h-64 mb-3">
+                  <Bar :data="pelangganNilaiData" :options="horizontalBarOptions" />
               </div>
               <table class="w-full text-sm text-left text-gray-500">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50">
@@ -253,8 +417,8 @@ const setTimeframe = (timeframe) => {
             </div>
             <div class="bg-white p-6 rounded-lg shadow-md">
               <h3 class="text-lg font-semibold text-gray-600 mb-3">Top 5 Pelanggan (Jumlah Transaksi - {{selectedTimeframe}})</h3>
-              <div class="h-48 bg-gray-200 flex items-center justify-center rounded text-gray-500 mb-3">
-                Placeholder: Horizontal Bar Chart
+              <div class="h-64 mb-3">
+                 <Bar :data="pelangganTransaksiData" :options="horizontalBarOptions" />
               </div>
               <table class="w-full text-sm text-left text-gray-500">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50">
@@ -275,3 +439,13 @@ const setTimeframe = (timeframe) => {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Anda bisa menambahkan style khusus di sini jika diperlukan */
+/* Misalnya, memastikan chart tidak terlalu kecil di layar mobile */
+@media (max-width: 768px) {
+  .h-64 {
+    height: 18rem; /* Sedikit lebih tinggi untuk mobile */
+  }
+}
+</style>
