@@ -53,12 +53,24 @@
       </router-link>
 
       <router-link
-        to="pengaturan"
+        v-if="isOwner"
+        to="akun"
         class="block py-2 px-4 rounded-xl text-gray-700 hover:bg-lime-100 transition"
         active-class="bg-lime-100 font-semibold text-lime-600"
       >
-        Pengaturan
+        Akun
       </router-link>
     </nav>
   </aside>
 </template>
+<script setup>
+import { onMounted, ref } from 'vue';
+import Cookies from 'js-cookie';
+
+const isOwner = ref(false);
+
+onMounted(() => {
+  // Cek apakah pengguna adalah pemilik
+  isOwner.value = Cookies.get('role') === 'owner';
+});
+</script>

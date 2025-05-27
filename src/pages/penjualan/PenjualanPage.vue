@@ -15,7 +15,7 @@
         v-model="search"
         @input="onSearchInput"
         type="text"
-        placeholder="Cari transaksi (ID Nota, ID Pelanggan)..."
+        placeholder="Cari transaksi (ID Nota, Pelanggan)..."
         class="flex-grow px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
         style="height: 38px"
       />
@@ -46,10 +46,19 @@
           >
             Detail
           </button>
-          </template>
+          <button
+            @click="handlePrintTransaction(row.id)"
+            class="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1 rounded-md text-sm mr-2 transition"
+          >
+            Print
+          </button>
+        </template>
         <template #items_summary="{ row }">
-            <span v-if="row.items && row.items.length > 0" class="text-xs">
-                {{ row.items.length }} jenis produk, Total Qty: {{ totalQuantity(row.items) }}
+            <span v-if="row.product_list" class="text-xs">
+                {{ row.product_list.split(',').length }} jenis produk
+            </span>
+            <span v-else-if="row.items && row.items.length > 0" class="text-xs">
+                 {{ row.items.length }} jenis
             </span>
             <span v-else class="text-xs text-gray-500">-</span>
         </template>
@@ -65,7 +74,7 @@
         @submit="handleSubmit"
         @close="closeFormModal"
       />
-      </BaseModal>
+    </BaseModal>
 
     <BaseModal :show="showDetailModal" title="Detail Transaksi" @close="closeDetailModal" width="max-w-2xl">
         <div v-if="loadingDetail" class="flex justify-center items-center min-h-[200px]">
@@ -77,8 +86,8 @@
                 <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                     <p><strong class="text-gray-600">ID Nota:</strong> {{ selectedTransactionDetail.transaction_code }}</p>
                     <p><strong class="text-gray-600">Tanggal:</strong> {{ formatDate(selectedTransactionDetail.created_at) }}</p>
-                    <p><strong class="text-gray-600">Pelanggan ID:</strong> {{ selectedTransactionDetail.customer_id }} </p>
-                    <p><strong class="text-gray-600">Kasir ID:</strong> {{ selectedTransactionDetail.user_id }} </p>
+                    <p><strong class="text-gray-600">Pelanggan:</strong> {{ selectedTransactionDetail.customer_name || `ID: ${selectedTransactionDetail.customer_id}` }} </p>
+                    <p><strong class="text-gray-600">Kasir:</strong> {{ selectedTransactionDetail.user_name || `ID: ${selectedTransactionDetail.user_id}` }} </p>
                     <p class="col-span-2"><strong class="text-gray-600">Total Harga:</strong> <span class="font-bold text-emerald-600">Rp {{ (selectedTransactionDetail.total_harga || 0).toLocaleString('id-ID') }}</span></p>
                 </div>
             </div>
@@ -127,6 +136,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router'; // 1. Impor useRouter
 import BaseTable from '../../components/atoms/BaseTable.vue';
 import BaseModal from '../../components/atoms/BaseModal.vue';
 import BasePagination from '../../components/atoms/BasePagination.vue';
@@ -134,16 +144,16 @@ import TransactionForm from '../../components/transaction/TransactionForm.vue';
 import {
   getTransactionList,
   createTransaction,
-  // updateTransaction, // Dihilangkan
-  // deleteTransactionData, // Dihilangkan
   getTransactionDetail,
 } from '../../services/transactionService.js';
 import LoadingCircle from '../../components/atoms/LoadingCircle.vue';
 
+const router = useRouter(); // 2. Inisialisasi router
+
 const columns = [
   { label: 'ID Nota', key: 'transaction_code', class: 'w-1/6 whitespace-nowrap' },
-  { label: 'Pelanggan', key: 'customer_name', class: 'w-1/6' }, // Atau customer_id jika nama tidak tersedia di list
-  { label: 'Kasir', key: 'user_name', class: 'w-1/12' },       // Atau user_id
+  { label: 'Pelanggan', key: 'customer_name', class: 'w-1/6' },
+  { label: 'Kasir', key: 'user_name', class: 'w-1/12' },
   { label: 'Ringkasan Item', key: 'items_summary', slot: true, class: 'w-2/6' },
   { label: 'Total Harga', key: 'total_harga', type: 'currency', class: 'w-1/6 text-right whitespace-nowrap' },
   { label: 'Tanggal', key: 'created_at', type: 'date', class: 'whitespace-nowrap' },
@@ -156,19 +166,20 @@ const limit = ref(10);
 const totalPages = ref(1);
 const loading = ref(false);
 
-// State untuk modal form (hanya untuk tambah)
 const showFormModal = ref(false);
-// selectedTransactionForForm tidak lagi diperlukan untuk mode edit
-// const selectedTransactionForForm = ref(null); // Dihilangkan
 
-// State untuk modal detail
 const showDetailModal = ref(false);
 const selectedTransactionDetail = ref(null);
 const loadingDetail = ref(false);
+// const loadingPrint = ref(false); // Tidak lagi diperlukan jika print di halaman terpisah
 
-const formatDate = (dateString) => {
+const formatDate = (dateString, includeTime = true) => {
   if (!dateString) return '-';
-  const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' };
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  if (includeTime) {
+    options.hour = '2-digit';
+    options.minute = '2-digit';
+  }
   return new Date(dateString).toLocaleDateString('id-ID', options);
 };
 
@@ -188,8 +199,8 @@ const fetchData = async () => {
     if (response.success && response.data) {
       rows.value = response.data.data.map(tx => ({
         ...tx,
-        // customer_name: tx.customer?.nama || tx.customer_id, // Contoh jika ada relasi
-        // user_name: tx.user?.nama || tx.user_id,             // Contoh jika ada relasi
+        customer_name: tx.customer_name || (tx.customer ? tx.customer.nama : `ID: ${tx.customer_id}`),
+        user_name: tx.user_name || (tx.user ? tx.user.username : `ID: ${tx.user_id}`),
       }));
       const filteredCount = Number(response.data.filtered || response.data.total || rows.value.length);
       totalPages.value = Math.max(1, Math.ceil(filteredCount / limit.value));
@@ -206,9 +217,7 @@ const fetchData = async () => {
   }
 };
 
-// Fungsi untuk modal form (hanya tambah)
 const openFormModal = () => {
-  // selectedTransactionForForm.value = null; // Tidak perlu lagi karena hanya untuk tambah
   showFormModal.value = true;
 };
 
@@ -216,35 +225,33 @@ const closeFormModal = () => {
   showFormModal.value = false;
 };
 
-const handleSubmit = async (formDataFromForm) => {
+const handleSubmit = async (formDataFromForm, formIsSubmittingCallback) => {
   const payload = {
-    ...formDataFromForm,
+    user_id: formDataFromForm.user_id,
+    customer_id: formDataFromForm.customer_id,
     items: formDataFromForm.items.map(item => ({
-      product_id: item.product_id,
-      quantity: item.quantity,
-      // harga_satuan (dari form) tidak dikirim ke API create transaksi sesuai contoh curl awal
+        product_id: item.product_id,
+        quantity: item.quantity,
+        harga_satuan: item.harga_satuan,
     })),
   };
-  
-  // Tidak ada lagi loading.value = true di sini karena isSubmitting di form menangani tombolnya
-  // Dan PenjualanPage akan re-fetch data setelah modal ditutup
   try {
-    // Hanya ada createTransaction karena fitur edit dihilangkan
     const response = await createTransaction(payload);
     if (!response.success) {
       throw new Error(response.message || 'Gagal membuat transaksi.');
     }
-    console.log('Transaksi berhasil dibuat:', response);
-    // Tambahkan notifikasi sukses di sini jika perlu
     closeFormModal();
-    fetchData(); 
+    fetchData();
   } catch (error) {
     console.error("Error saat membuat transaksi:", error);
     alert(`Gagal membuat transaksi: ${error.message}`);
+  } finally {
+    if (typeof formIsSubmittingCallback === 'function') {
+        formIsSubmittingCallback();
+    }
   }
 };
 
-// Fungsi untuk modal detail
 const openDetailModal = async (transactionId) => {
     loadingDetail.value = true;
     showDetailModal.value = true;
@@ -268,7 +275,23 @@ const closeDetailModal = () => {
     selectedTransactionDetail.value = null;
 };
 
-// Fungsi hapus dan konfirmasi hapus dihilangkan
+// 3. Modifikasi handlePrintTransaction
+const handlePrintTransaction = (transactionId) => {
+  if (!transactionId) {
+    console.error("Tidak ada ID transaksi untuk dicetak.");
+    alert("Tidak bisa mencetak, ID transaksi tidak ditemukan.");
+    return;
+  }
+  // Ganti 'PrintableTransactionNote' dengan nama rute yang Anda definisikan
+  // untuk komponen cetak transaksi
+  const routeData = router.resolve({ 
+    name: 'PrintableTransactionNote', // Pastikan nama rute ini ada di router.js
+    params: { id: transactionId } 
+  });
+  // Buka di tab baru
+  window.open(routeData.href, '_blank', 'height=700,width=800,scrollbars=yes,resizable=yes');
+};
+
 
 const changePage = (newPage) => {
   if (newPage >= 1 && newPage <= totalPages.value) {

@@ -1,5 +1,12 @@
 // src\services\produkService.js
 import axios from 'axios';
+import Cookies from 'js-cookie';
+
+const token = Cookies.get('token');
+
+if (token) {
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
 
 export const getProdukList = async ({ search = '', page = 1, limit = 10 }) => {
   const response = await axios.get(`/api/produk/list`, {

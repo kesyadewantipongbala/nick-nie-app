@@ -1,5 +1,12 @@
 // src\services\pelangganService.js
 import axios from 'axios';
+import Cookies from 'js-cookie';
+
+const token = Cookies.get('token');
+
+if (token) {
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
 
 export const getPelangganList = async ({ search = '', page = 1, limit = 10 }) => {
   const response = await axios.get(`/api/customer/list`, {

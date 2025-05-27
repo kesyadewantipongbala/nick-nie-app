@@ -36,7 +36,6 @@
         id="kontak"
         v-model="form.kontak"
         type="text"
-        required
         placeholder="Masukkan nomor kontak"
         class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
       />
@@ -110,7 +109,7 @@
   const onSubmit = () => {
     loading.value = true;
 
-    if (!form.value.nama || !form.value.alamat || !form.value.kontak) {
+    if (!form.value.nama || !form.value.alamat ) {
       alert('Mohon lengkapi nama, alamat, dan kontak supplier.');
       loading.value = false;
       return;

@@ -23,7 +23,10 @@ import PelangganPage from './pages/pelanggan/PelangganPage.vue';
 import SupplierPage from './pages/supplier/SupplierPage.vue';
 import PembelianPage from './pages/pembelian/PembelianPage.vue';
 import PenjualanPage from './pages/penjualan/PenjualanPage.vue';
+import AkunPage from './pages/akun/AkunPage.vue';
+import PrintNota from './components/prints/PrintablePurchaseNote.vue'
 import NotFoundPage from './pages/NotFoundPage.vue';
+
 
 const pinia = createPinia();
 
@@ -70,6 +73,18 @@ const router = createRouter({
       name: 'PenjualanPage',
       component: PenjualanPage,
       meta: { title: 'Data Penjualan' },
+    },
+    {
+      path: '/akun',
+      name: 'AkunPage',
+      component: AkunPage,
+      meta: { title: 'Data Akun Pegawai' },
+    },
+    {
+      path: '/print/purchase-note/:id',
+      name: 'PrintableTransactionNote',
+      component: PrintNota,
+      meta: { isPrintPage: true, title: 'Print Nota Pembelian' },
     },
     {
       path: '/:pathMatch(.*)*',

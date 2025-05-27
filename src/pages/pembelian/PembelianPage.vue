@@ -77,8 +77,8 @@
                 <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                     <p><strong class="text-gray-600">Kode Pembelian:</strong> {{ selectedPurchaseDetail.purchase_code }}</p>
                     <p><strong class="text-gray-600">Tanggal:</strong> {{ formatDate(selectedPurchaseDetail.created_at) }}</p>
-                    <p><strong class="text-gray-600">Supplier:</strong> {{ selectedPurchaseDetail.supplier_name || `ID: ${selectedPurchaseDetail.supplier_id}` }}</p>
-                    <p><strong class="text-gray-600">User:</strong> {{ selectedPurchaseDetail.user_name || `ID: ${selectedPurchaseDetail.user_id}` }}</p>
+                    <p><strong class="text-gray-600">Supplier:</strong> {{ selectedPurchaseDetail.supplier_name}}</p>
+                    <p><strong class="text-gray-600">User:</strong> {{ selectedPurchaseDetail.petugas }}</p>
                     <p class="col-span-2"><strong class="text-gray-600">Catatan:</strong> {{ selectedPurchaseDetail.catatan || '-' }}</p>
                     <p class="col-span-2"><strong class="text-gray-600">Total Biaya:</strong> <span class="font-bold text-emerald-600">Rp {{ (selectedPurchaseDetail.total_biaya || 0).toLocaleString('id-ID') }}</span></p>
                 </div>
