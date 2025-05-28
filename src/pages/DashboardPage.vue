@@ -29,7 +29,7 @@ ChartJS.register(
   Filler
 );
 
-const pageTitle = ref('Dashboard Analitik');
+const pageTitle = ref('Dashboard');
 const selectedTimeframe = ref('Harian'); // Default Harian
 
 // --- Data & Fungsi untuk Line Chart Penjualan Dinamis ---
@@ -356,7 +356,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex h-screen bg-gray-100">
+  <div class="flex h-screen bg-gray-100 pb-5">
     <div class="flex flex-col flex-1 overflow-hidden">
       <main class="flex-1 overflow-y-auto p-6 pb-20">
         <div class="flex justify-between items-center mb-6">
