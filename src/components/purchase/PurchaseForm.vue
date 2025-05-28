@@ -120,7 +120,7 @@
             <input
               :id="`quantity-${index}`"
               v-model.number="item.quantity"
-              type="number"
+              type="number" step="0.1"
               min="1"
               required
               placeholder="Masukkan jumlah"
