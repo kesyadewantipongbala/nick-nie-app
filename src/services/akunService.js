@@ -10,8 +10,8 @@ if (token) {
 
 export const login = async (data) => {
   const response = await axios.post('/api/user/login', data);
-  return response.data; 
-}
+  return response.data;
+};
 
 export const getAkunList = async ({ search = '', page = 1, limit = 10 }) => {
   const response = await axios.get('/api/user/list', {
@@ -30,8 +30,14 @@ export const createAkun = async (data) => {
   return response.data;
 };
 
-export const resetPassword = async (id, data) => {
-  const response = await axios.post(`/api/user/reset-password/${id}`);
+// export const resetPassword = async (id, data) => {
+//   const response = await axios.post(`/api/user/reset-password/${id}`);
+//   return response.data;
+// };
+
+export const resetPassword = async (id, passwordData) => {
+  // Perbaiki path agar konsisten: tambahkan /api/ dan gunakan /user/ (singular)
+  const response = await axios.post(`/api/user/set-password/${id}`, passwordData);
   return response.data;
 };
 

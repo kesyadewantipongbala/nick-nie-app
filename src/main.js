@@ -5,8 +5,8 @@ import { createRouter, createWebHistory } from 'vue-router';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-axios.defaults.baseURL = 'https://robert-praise-calculate-singer.trycloudflare.com';
-// axios.defaults.baseURL = 'http://localhost:3000';
+// axios.defaults.baseURL = 'https://robert-praise-calculate-singer.trycloudflare.com';
+axios.defaults.baseURL = 'http://localhost:3000';
 
 const token = Cookies.get('token');
 
@@ -24,9 +24,8 @@ import SupplierPage from './pages/supplier/SupplierPage.vue';
 import PembelianPage from './pages/pembelian/PembelianPage.vue';
 import PenjualanPage from './pages/penjualan/PenjualanPage.vue';
 import AkunPage from './pages/akun/AkunPage.vue';
-import PrintNota from './components/prints/PrintablePurchaseNote.vue'
+import PrintNota from './components/prints/PrintablePurchaseNote.vue';
 import NotFoundPage from './pages/NotFoundPage.vue';
-
 
 const pinia = createPinia();
 
