@@ -1,3 +1,4 @@
+<!-- src\pages\DashboardPage.vue -->
 <script setup>
   import { ref, computed, onMounted } from 'vue';
   // 1. Impor komponen chart dari vue-chartjs
